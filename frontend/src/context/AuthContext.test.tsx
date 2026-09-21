@@ -3,10 +3,14 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "@/hooks/useAuth";
+import { registrarSesion, sesionSigueVigente } from "@/lib/sessionService";
+import { toast } from "@/lib/toast";
 import type { Profile } from "@/types/database.types";
 
 const singleMock = vi.fn();
 const getSessionMock = vi.fn();
+const signInWithPasswordMock = vi.fn();
+const signOutMock = vi.fn();
 const onAuthStateChangeMock = vi.fn((..._args: unknown[]) => ({
   data: { subscription: { unsubscribe: vi.fn() } },
 }));
@@ -21,6 +25,8 @@ vi.mock("@/lib/supabase", () => ({
     auth: {
       getSession: () => getSessionMock(),
       onAuthStateChange: (...args: unknown[]) => onAuthStateChangeMock(...args),
+      signInWithPassword: (...args: unknown[]) => signInWithPasswordMock(...args),
+      signOut: (...args: unknown[]) => signOutMock(...args),
     },
     from: () => ({
       select: () => ({
@@ -30,6 +36,14 @@ vi.mock("@/lib/supabase", () => ({
     channel: (...args: unknown[]) => channelFnMock(...args),
     removeChannel: (...args: unknown[]) => removeChannelMock(...args),
   },
+}));
+
+vi.mock("@/lib/sessionService", () => ({
+  registrarSesion: vi.fn(),
+  sesionSigueVigente: vi.fn(),
+}));
+vi.mock("@/lib/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
 }));
 
 const fakeUser = { id: "u1", email: "cliente@test.test" };
@@ -69,9 +83,10 @@ function fakeProfile(over: Partial<Profile> = {}): Profile {
 }
 
 function Harness() {
-  const { profile, loading, profileError, refreshProfile } = useAuth();
+  const { profile, loading, profileError, refreshProfile, signIn } = useAuth();
   return (
     <div>
+      <button onClick={() => signIn("a@b.c", "clave")}>ingresar</button>
       <span data-testid="loading">{String(loading)}</span>
       <span data-testid="profile-name">{profile?.full_name ?? "sin-perfil"}</span>
       <span data-testid="profile-error">{profileError ?? "sin-error"}</span>
@@ -98,6 +113,11 @@ beforeEach(() => {
   channelObj.on.mockClear().mockReturnValue(channelObj);
   channelObj.subscribe.mockClear().mockReturnValue(channelObj);
   removeChannelMock.mockClear();
+  signInWithPasswordMock.mockReset().mockResolvedValue({ error: null });
+  signOutMock.mockReset().mockResolvedValue({ error: null });
+  vi.mocked(registrarSesion).mockReset().mockResolvedValue(undefined);
+  vi.mocked(sesionSigueVigente).mockReset().mockResolvedValue(true);
+  vi.mocked(toast.info).mockClear();
 });
 
 describe("AuthContext — carga de perfil", () => {
@@ -163,5 +183,76 @@ describe("AuthContext — carga de perfil", () => {
       expect.objectContaining({ event: "UPDATE", table: "profiles", filter: "id=eq.u1" }),
       expect.any(Function)
     );
+  });
+});
+
+describe("AuthContext — sesión única por cuenta", () => {
+  it("cierra la sesión en local y avisa cuando otra sesión tomó la cuenta", async () => {
+    singleMock.mockResolvedValue({ data: fakeProfile(), error: null });
+    vi.mocked(sesionSigueVigente).mockResolvedValue(false);
+
+    renderHarness();
+
+    // scope "local": un signOut global revocaría también la sesión nueva
+    await waitFor(() => expect(signOutMock).toHaveBeenCalledWith({ scope: "local" }));
+    expect(toast.info).toHaveBeenCalledWith("Tu sesión se cerró", expect.any(String));
+  });
+
+  it("no cierra la sesión mientras sigue siendo la vigente", async () => {
+    singleMock.mockResolvedValue({ data: fakeProfile(), error: null });
+
+    renderHarness();
+
+    await waitFor(() => expect(sesionSigueVigente).toHaveBeenCalled());
+    expect(signOutMock).not.toHaveBeenCalled();
+    expect(toast.info).not.toHaveBeenCalled();
+  });
+
+  it("abre un canal Realtime sobre sesiones_activas para enterarse al instante", async () => {
+    singleMock.mockResolvedValue({ data: fakeProfile(), error: null });
+
+    renderHarness();
+
+    await waitFor(() => expect(channelFnMock).toHaveBeenCalledWith("sesion:u1"));
+    expect(channelObj.on).toHaveBeenCalledWith(
+      "postgres_changes",
+      expect.objectContaining({ table: "sesiones_activas", filter: "user_id=eq.u1" }),
+      expect.any(Function)
+    );
+  });
+
+  it("signIn toma el control de la cuenta y no se expulsa a sí mismo mientras registra", async () => {
+    getSessionMock.mockResolvedValue({ data: { session: null } });
+    singleMock.mockResolvedValue({ data: fakeProfile(), error: null });
+    let authCallback: (evento: string, sesion: unknown) => void = () => {};
+    onAuthStateChangeMock.mockImplementation((cb) => {
+      authCallback = cb as typeof authCallback;
+      return { data: { subscription: { unsubscribe: vi.fn() } } };
+    });
+    // Hasta que registrarSesion termina, la base todavía tiene la sesión vieja
+    // como activa: verificar en esa ventana expulsaría al login recién hecho.
+    vi.mocked(sesionSigueVigente).mockResolvedValue(false);
+    let terminarRegistro: () => void = () => {};
+    vi.mocked(registrarSesion).mockReturnValue(
+      new Promise<void>((resolve) => {
+        terminarRegistro = resolve;
+      })
+    );
+    // supabase-js dispara SIGNED_IN antes de que signInWithPassword resuelva
+    signInWithPasswordMock.mockImplementation(async () => {
+      authCallback("SIGNED_IN", fakeSession);
+      return { error: null };
+    });
+
+    renderHarness();
+    await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("false"));
+    await userEvent.click(screen.getByText("ingresar"));
+
+    await waitFor(() => expect(registrarSesion).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(channelFnMock).toHaveBeenCalledWith("sesion:u1"));
+    expect(sesionSigueVigente).not.toHaveBeenCalled();
+    expect(signOutMock).not.toHaveBeenCalled();
+
+    terminarRegistro();
   });
 });

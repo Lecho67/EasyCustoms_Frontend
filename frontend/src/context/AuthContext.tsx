@@ -9,6 +9,7 @@ import React, {
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { toast } from '../lib/toast';
+import { registrarSesion, sesionSigueVigente } from '../lib/sessionService';
 import type { Profile } from '../types/database.types';
 import { AuthContext } from './auth';
 
@@ -25,6 +26,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Cada llamada a fetchProfile toma un id; si llega una más nueva (login/logout
   // rápido), las respuestas viejas se descartan para no pisar el estado actual.
   const requestIdRef = useRef(0);
+
+  // Verdadero mientras `signIn` toma el control de la cuenta (registrarSesion):
+  // onAuthStateChange dispara antes de que termine, y en esa ventana la base
+  // todavía tiene registrada la sesión anterior — verificar entonces expulsaría
+  // al login recién hecho.
+  const registrandoSesionRef = useRef(false);
 
   const fetchProfile = useCallback(async (userId: string, intentos = 3) => {
     const reqId = ++requestIdRef.current;
@@ -116,6 +123,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user, fetchProfile]);
 
+  // Sesión única por cuenta ("la última gana"): si otro dispositivo inicia
+  // sesión, `registrar_sesion()` revoca ésta y acá nos enteramos por Realtime
+  // sobre `sesiones_activas`, al volver el foco a la pestaña, o en <60 s por
+  // polling. Ver docs/sql/limites-de-uso.sql.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) return;
+
+    let cerrando = false;
+    const verificar = async () => {
+      if (cerrando || registrandoSesionRef.current) return;
+      const vigente = await sesionSigueVigente();
+      if (vigente || cerrando || registrandoSesionRef.current) return;
+      cerrando = true;
+      // scope "local": el signOut global revocaría también la sesión nueva.
+      await supabase.auth.signOut({ scope: 'local' });
+      toast.info(
+        'Tu sesión se cerró',
+        'Iniciaste sesión con esta cuenta en otro dispositivo.'
+      );
+    };
+
+    verificar();
+    const intervalo = setInterval(verificar, 60_000);
+    window.addEventListener('focus', verificar);
+    const channel = supabase
+      .channel(`sesion:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sesiones_activas', filter: `user_id=eq.${userId}` },
+        verificar
+      )
+      .subscribe();
+
+    return () => {
+      clearInterval(intervalo);
+      window.removeEventListener('focus', verificar);
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
   const signUp = async (email: string, password: string, fullName?: string) => {
     const { error } = await supabase.auth.signUp({
       email,
@@ -126,8 +174,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    registrandoSesionRef.current = true;
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      await registrarSesion();
+    } finally {
+      registrandoSesionRef.current = false;
+    }
   };
 
   // Redirige a Google y vuelve a /dashboard; la sesión la recoge

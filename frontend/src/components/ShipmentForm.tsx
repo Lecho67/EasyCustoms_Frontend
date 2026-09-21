@@ -338,9 +338,12 @@ const SubfieldsGrid: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 interface ShipmentFormProps {
   onSubmit: (data: WizardFormData) => void | Promise<void>;
   isSubmitting: boolean;
+  /** Segundos que faltan para poder enviar otra consulta; con > 0 el envío se
+   * deshabilita y el botón muestra la cuenta regresiva. */
+  esperaSegundos?: number;
 }
 
-export function ShipmentForm({ onSubmit, isSubmitting }: ShipmentFormProps) {
+export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: ShipmentFormProps) {
   const [form, setForm] = useState<WizardFormData>(emptyFormData());
   const [errors, setErrors] = useState<FormErrors>({});
   const [step, setStep] = useState(1);
@@ -893,10 +896,14 @@ export function ShipmentForm({ onSubmit, isSubmitting }: ShipmentFormProps) {
           <Button
             key="evaluar"
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || esperaSegundos > 0}
             className="w-full sm:w-auto"
           >
-            {isSubmitting ? "Evaluando envío..." : "Evaluar envío"}
+            {isSubmitting
+              ? "Evaluando envío..."
+              : esperaSegundos > 0
+                ? `Espera ${esperaSegundos} s`
+                : "Evaluar envío"}
           </Button>
         )}
       </div>
