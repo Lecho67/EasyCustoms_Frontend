@@ -56,7 +56,7 @@ de la base y su configuración viven en el proyecto Supabase.
 | A2 | Sin headers de seguridad / CSP. | ✅ En `frontend/vercel.json`: CSP (`frame-src` de Power BI, `connect-src` de Supabase REST+WSS), `HSTS`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cache-Control` inmutable para `/assets`. Probado sin violaciones en páginas públicas + shell. **Verificar en el preview** las páginas autenticadas, sobre todo `/reportes` (Recharts + Power BI). |
 | A3 | **Allowlist de redirect de Supabase Auth.** Reset de contraseña y `detectSessionInUrl` necesitan el dominio de prod **y** los de preview (`*.vercel.app`) en Supabase → Auth → URL Configuration. | ❌ Abierto — Simon (§9). |
 | A4 | Sin pipeline de deploy. | ✅ Vercel despliega en push a `main` + preview por PR. `ci.yml` sigue como gate de calidad. |
-| A5 | **CORS del motor de reglas + `connect-src`.** El backend debe allowlistear el origen de prod y de preview para el preflight de `/api/v1/shipments/evaluate`. **Y** el `connect-src` de la CSP debe sumar la URL del backend cuando exista. | 🔷 Parcial. Lado frontend ya resuelto: `src/lib/api.ts` dejó de mandar `Authorization` (el `cors()` del backend no lo incluye en `allowedHeaders` — rompía el preflight) y ahora manda `X-API-Key` (`VITE_X_API_KEY`). Lado backend: `CORS_ORIGINS` ya lista el origen de prod (`https://border-check-ai-frontend.vercel.app`), `http://localhost:5173`, y un patrón con comodín para previews de Vercel (`https://border-check-ai-frontend-*-lecho.vercel.app` — el backend ahora soporta `*` en cada entrada, ver `src/lib/corsOriginMatcher.ts` de ese repo). Verificado con un preflight real contra los 4 casos (prod, preview, localhost, origen no confiable). Pendiente real: el `connect-src` de la CSP sigue sin la URL del backend — bloqueado por la decisión #2 (no hay URL de prod estable todavía; agregar un wildcard de `trycloudflare.com` no es buena idea porque abriría `connect-src` a cualquier túnel, propio o de un atacante, vía XSS). |
+| A5 | **CORS del motor de reglas + `connect-src`.** El backend debe allowlistear el origen de prod y de preview para el preflight de `/api/v1/shipments/evaluate`. **Y** el `connect-src` de la CSP debe sumar la URL del backend cuando exista. | ✅ Resuelto (con matiz de riesgo aceptado a propósito). Frontend: `src/lib/api.ts` manda `X-API-Key` (`VITE_X_API_KEY`), no `Authorization` (el backend no lo incluye en `allowedHeaders`). Backend: `CORS_ORIGINS` lista el origen de prod, `http://localhost:5173`, y un comodín para previews de Vercel (`https://easycustoms-*-lecho.vercel.app`, ver `src/lib/corsOriginMatcher.ts`). El proyecto de Vercel se renombró (`border-check-ai-frontend` → `easycustoms`): el dominio viejo devuelve `404 DEPLOYMENT_NOT_FOUND` y su nombre quedó liberado, así que se **reemplazó** en el allowlist en vez de conservarlo. `connect-src` de `frontend/vercel.json` suma `https://*.trycloudflare.com` y `https://*.ngrok-free.dev` — sin URL de prod estable todavía (decisión #2 sigue abierta), esto es el atajo para poder probar contra un backend real mientras tanto. **Riesgo aceptado deliberadamente**: cualquiera de esos dos dominios es compartido/gratuito — un atacante también puede levantar un túnel ahí, así que un XSS en el sitio podría exfiltrar datos a un túnel ajeno bajo ese mismo dominio. Reemplazar por el origen exacto (sin comodín) en cuanto haya una URL de backend estable. |
 | A6 | **Matiz de RLS abierto.** Un agente puede sobrescribir un caso `assigned_agent_id IS NULL` sin "tomarlo" antes (`CLAUDE.md`). | ⏳ Decisión de launch. |
 | A7 | **Envs en build-time.** `VITE_*` se inlinea en `vite build`. Cargar `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` y (cuando existan) `VITE_API_BASE_URL` + `VITE_X_API_KEY` en Vercel → Environment Variables **antes** del primer deploy. Sin `VITE_API_BASE_URL` la app corre con el mock. | ❌ Abierto — Simon (§9). |
 
@@ -141,11 +141,12 @@ Sanitización de inputs: React escapa JSX por defecto; no hay `dangerouslySetInn
 - [ ] `build.sourcemap: true` + integrar Sentry (gate `PROD`)
 - [ ] `ErrorBoundary`: `⚠` → `<AlertTriangle>`
 - [ ] (opcional) E2E en CI con secrets; "Wait for CI" en Vercel
-- [ ] Sumar la URL real del backend al `connect-src` de `frontend/vercel.json` cuando exista (decisión #2)
+- [ ] Reemplazar los comodines de `connect-src` (`*.trycloudflare.com`, `*.ngrok-free.dev`) por el origen exacto del backend cuando haya una URL de prod estable (decisión #2) — hoy son un atajo aceptado a propósito para poder probar contra túneles
 
 **Frontend — hecho (sesión CORS/API key):**
 - [x] `src/lib/api.ts`: se dejó de enviar `Authorization: Bearer <jwt>` (no está en `allowedHeaders` del CORS del backend) y se agregó `X-API-Key` desde `VITE_X_API_KEY` (opcional — si no está seteada, el request va sin el header).
 - [x] `src/vite-env.d.ts` + `.env.example`: tipado y documentación de `VITE_X_API_KEY`.
+- [x] `connect-src` de `frontend/vercel.json` suma `https://*.trycloudflare.com` y `https://*.ngrok-free.dev` (túneles ephemeral usados para desarrollo — la app en Vercel ya puede pegarle a un backend real detrás de cualquiera de los dos sin editar `vercel.json` en cada reinicio del túnel).
 
 **Base de datos (SQL Editor, con verificación):**
 - [ ] Esquema versionado en `supabase/migrations/`
@@ -155,11 +156,11 @@ Sanitización de inputs: React escapa JSX por defecto; no hay `dangerouslySetInn
 - [x] Agregar el dominio de prod **y** `*.vercel.app` a Auth → URL Configuration
 
 **Cross-equipo (backend):**
-- [x] CORS del motor de reglas allowlistea el origen de prod (`https://border-check-ai-frontend.vercel.app` ya está en `CORS_ORIGINS`)
-- [x] Orígenes de **preview** de Vercel: el backend agregó soporte de comodín `*` en `CORS_ORIGINS` (`src/lib/corsOriginMatcher.ts`) y `https://border-check-ai-frontend-*-lecho.vercel.app` ya está en el `.env`. Si el team slug de Vercel cambia alguna vez, el patrón hay que actualizarlo.
+- [x] CORS del motor de reglas allowlistea el origen de prod (`https://easycustoms.vercel.app` ya está en `CORS_ORIGINS`; el dominio anterior `border-check-ai-frontend.vercel.app` ya no existe y se sacó)
+- [x] Orígenes de **preview** de Vercel: el backend agregó soporte de comodín `*` en `CORS_ORIGINS` (`src/lib/corsOriginMatcher.ts`) y `https://easycustoms-*-lecho.vercel.app` ya está en el `.env`. Supone que el team slug de Vercel sigue siendo `lecho`; si el nombre del proyecto o el slug cambian otra vez, el patrón hay que actualizarlo.
 - [x] Entrada de `localhost:5173` en `CORS_ORIGINS` arreglada (tenía un path pegado que nunca matcheaba un `Origin` real)
 - [x] Confirmado: `API_KEYS` del backend incluye la key que carga `VITE_X_API_KEY` localmente. Falta confirmar lo mismo una vez que `VITE_X_API_KEY` se cargue en Vercel.
-- [ ] Sumar la URL del backend al `connect-src` de la CSP (`frontend/vercel.json`) — bloqueado hasta tener URL de prod
+- [x] `connect-src` de la CSP ya acepta túneles (`*.trycloudflare.com`, `*.ngrok-free.dev`) — falta el reemplazo por el origen exacto cuando haya URL de prod
 - [ ] Confirmar códigos HS reales en logs
 - [ ] URL de producción del backend
 

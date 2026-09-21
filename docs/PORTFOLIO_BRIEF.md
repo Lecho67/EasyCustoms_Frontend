@@ -19,7 +19,7 @@ cualquier veredicto de la IA.
 **Una línea:** "Sabé si tu envío pasa la aduana antes de despacharlo — IA anclada a
 normativa real, con revisión humana."
 
-- **Demo en vivo:** https://border-check-ai-frontend.vercel.app
+- **Demo en vivo:** https://easycustoms.vercel.app
 - **Repo (frontend):** https://github.com/Lecho67/BorderCheck-AI_Frontend
 - **Estado:** MVP funcional, en desarrollo activo.
 
