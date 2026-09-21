@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://border-check-ai-frontend.vercel.app/</loc>
+    <loc>https://easycustoms.vercel.app/</loc>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://border-check-ai-frontend.vercel.app/herramientas</loc>
+    <loc>https://easycustoms.vercel.app/herramientas</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://border-check-ai-frontend.vercel.app/soporte</loc>
+    <loc>https://easycustoms.vercel.app/soporte</loc>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://border-check-ai-frontend.vercel.app/login</loc>
+    <loc>https://easycustoms.vercel.app/login</loc>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://border-check-ai-frontend.vercel.app/registro</loc>
+    <loc>https://easycustoms.vercel.app/registro</loc>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://border-check-ai-frontend.vercel.app/terminos</loc>
+    <loc>https://easycustoms.vercel.app/terminos</loc>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://border-check-ai-frontend.vercel.app/privacidad</loc>
+    <loc>https://easycustoms.vercel.app/privacidad</loc>
     <priority>0.3</priority>
   </url>
 </urlset>

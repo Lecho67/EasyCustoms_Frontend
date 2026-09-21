@@ -11,4 +11,4 @@ Disallow: /consulta
 Disallow: /landing
 Disallow: /restablecer-contrasena
 
-Sitemap: https://border-check-ai-frontend.vercel.app/sitemap.xml
+Sitemap: https://easycustoms.vercel.app/sitemap.xml
