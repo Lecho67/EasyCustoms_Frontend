@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { registrarSesion, sesionSigueVigente } from "@/lib/sessionService";
-import { toast } from "@/lib/toast";
 import type { Profile } from "@/types/database.types";
 
 const singleMock = vi.fn();
@@ -42,10 +41,6 @@ vi.mock("@/lib/sessionService", () => ({
   registrarSesion: vi.fn(),
   sesionSigueVigente: vi.fn(),
 }));
-vi.mock("@/lib/toast", () => ({
-  toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
-}));
-
 const fakeUser = { id: "u1", email: "cliente@test.test" };
 const fakeSession = { user: fakeUser };
 
@@ -83,10 +78,13 @@ function fakeProfile(over: Partial<Profile> = {}): Profile {
 }
 
 function Harness() {
-  const { profile, loading, profileError, refreshProfile, signIn } = useAuth();
+  const { profile, loading, profileError, refreshProfile, signIn, sesionDesplazada, descartarAvisoSesion } =
+    useAuth();
   return (
     <div>
       <button onClick={() => signIn("a@b.c", "clave")}>ingresar</button>
+      <span data-testid="desplazada">{String(sesionDesplazada)}</span>
+      <button onClick={descartarAvisoSesion}>descartar-aviso</button>
       <span data-testid="loading">{String(loading)}</span>
       <span data-testid="profile-name">{profile?.full_name ?? "sin-perfil"}</span>
       <span data-testid="profile-error">{profileError ?? "sin-error"}</span>
@@ -117,7 +115,6 @@ beforeEach(() => {
   signOutMock.mockReset().mockResolvedValue({ error: null });
   vi.mocked(registrarSesion).mockReset().mockResolvedValue(undefined);
   vi.mocked(sesionSigueVigente).mockReset().mockResolvedValue(true);
-  vi.mocked(toast.info).mockClear();
 });
 
 describe("AuthContext — carga de perfil", () => {
@@ -187,7 +184,7 @@ describe("AuthContext — carga de perfil", () => {
 });
 
 describe("AuthContext — sesión única por cuenta", () => {
-  it("cierra la sesión en local y avisa cuando otra sesión tomó la cuenta", async () => {
+  it("cierra la sesión en local y levanta el aviso cuando otra sesión tomó la cuenta", async () => {
     singleMock.mockResolvedValue({ data: fakeProfile(), error: null });
     vi.mocked(sesionSigueVigente).mockResolvedValue(false);
 
@@ -195,17 +192,29 @@ describe("AuthContext — sesión única por cuenta", () => {
 
     // scope "local": un signOut global revocaría también la sesión nueva
     await waitFor(() => expect(signOutMock).toHaveBeenCalledWith({ scope: "local" }));
-    expect(toast.info).toHaveBeenCalledWith("Tu sesión se cerró", expect.any(String));
+    expect(screen.getByTestId("desplazada").textContent).toBe("true");
   });
 
-  it("no cierra la sesión mientras sigue siendo la vigente", async () => {
+  it("el aviso se puede descartar", async () => {
+    singleMock.mockResolvedValue({ data: fakeProfile(), error: null });
+    vi.mocked(sesionSigueVigente).mockResolvedValue(false);
+
+    renderHarness();
+    await waitFor(() => expect(screen.getByTestId("desplazada").textContent).toBe("true"));
+
+    await userEvent.click(screen.getByText("descartar-aviso"));
+
+    expect(screen.getByTestId("desplazada").textContent).toBe("false");
+  });
+
+  it("no cierra la sesión ni levanta el aviso mientras sigue siendo la vigente", async () => {
     singleMock.mockResolvedValue({ data: fakeProfile(), error: null });
 
     renderHarness();
 
     await waitFor(() => expect(sesionSigueVigente).toHaveBeenCalled());
     expect(signOutMock).not.toHaveBeenCalled();
-    expect(toast.info).not.toHaveBeenCalled();
+    expect(screen.getByTestId("desplazada").textContent).toBe("false");
   });
 
   it("abre un canal Realtime sobre sesiones_activas para enterarse al instante", async () => {

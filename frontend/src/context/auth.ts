@@ -8,6 +8,10 @@ export interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   profileError: string | null;
+  /** Verdadero cuando esta sesión se cerró porque la cuenta inició sesión en
+   * otro dispositivo (sesión única por cuenta); lo consume `SessionKickedModal`. */
+  sesionDesplazada: boolean;
+  descartarAvisoSesion: () => void;
   signUp: (email: string, password: string, fullName?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;

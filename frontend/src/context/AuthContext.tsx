@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [sesionDesplazada, setSesionDesplazada] = useState(false);
 
   // Cada llamada a fetchProfile toma un id; si llega una más nueva (login/logout
   // rápido), las respuestas viejas se descartan para no pisar el estado actual.
@@ -137,12 +138,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const vigente = await sesionSigueVigente();
       if (vigente || cerrando || registrandoSesionRef.current) return;
       cerrando = true;
+      // El aviso es un modal persistente (SessionKickedModal), no un toast: se
+      // levanta antes del signOut para que el usuario sepa por qué lo sacan.
+      setSesionDesplazada(true);
       // scope "local": el signOut global revocaría también la sesión nueva.
       await supabase.auth.signOut({ scope: 'local' });
-      toast.info(
-        'Tu sesión se cerró',
-        'Iniciaste sesión con esta cuenta en otro dispositivo.'
-      );
     };
 
     verificar();
@@ -211,6 +211,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         loading,
         profileError,
+        sesionDesplazada,
+        descartarAvisoSesion: () => setSesionDesplazada(false),
         signUp,
         signIn,
         signInWithGoogle,
