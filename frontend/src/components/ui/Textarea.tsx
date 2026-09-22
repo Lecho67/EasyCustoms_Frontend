@@ -10,7 +10,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       <div className="w-full">
         <textarea
           ref={ref}
-          className={`w-full rounded-xl border p-4 focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent resize-none ${
+          // text-base explícito: con menos de 16px iOS hace zoom al enfocar.
+          className={`w-full rounded-xl border p-4 text-base focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent resize-none ${
             error ? "border-red-400" : "border-slate-300"
           } ${className}`}
           {...props}

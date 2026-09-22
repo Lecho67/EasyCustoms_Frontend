@@ -95,21 +95,21 @@ export function KycReviewCard({ perfil, onResuelto }: Props) {
         onChange={(e) => setMotivo(e.target.value)}
         placeholder="Motivo del rechazo (obligatorio para rechazar, mínimo 10 caracteres)"
         rows={2}
-        className="mb-3 w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cobalt"
+        className="mb-3 w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cobalt sm:text-sm"
       />
 
       <div className="flex gap-2">
         <button
           onClick={() => handleRevisar("aprobado")}
           disabled={loading}
-          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+          className="min-h-11 flex-1 rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 sm:flex-none"
         >
           Aprobar
         </button>
         <button
           onClick={() => handleRevisar("rechazado")}
           disabled={loading}
-          className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+          className="min-h-11 flex-1 rounded-lg bg-red-600 px-4 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 sm:flex-none"
         >
           Rechazar
         </button>

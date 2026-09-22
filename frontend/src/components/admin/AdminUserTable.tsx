@@ -8,6 +8,64 @@ import { usePagination } from "@/hooks/usePagination";
 
 const ROLES: UserRole[] = ["cliente", "gestor", "agente", "admin"];
 
+// text-base en mobile: con menos de 16px iOS hace zoom al abrir el select.
+const selectClass =
+  "rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-cobalt disabled:opacity-50";
+
+interface SelectRolProps {
+  id?: string;
+  value: Profile["role"];
+  disabled: boolean;
+  onChange: (rol: Profile["role"]) => void;
+  className?: string;
+}
+
+function SelectRol({ id, value, disabled, onChange, className = "" }: SelectRolProps) {
+  return (
+    <select
+      id={id}
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value as Profile["role"])}
+      className={`${selectClass} ${className}`}
+    >
+      {ROLES.map((r) => (
+        <option key={r} value={r}>
+          {r}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+interface SelectGestorProps {
+  id?: string;
+  value: string;
+  disabled: boolean;
+  gestores: Profile[];
+  onChange: (gestorId: string) => void;
+  className?: string;
+}
+
+function SelectGestor({ id, value, disabled, gestores, onChange, className = "" }: SelectGestorProps) {
+  return (
+    <select
+      id={id}
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+      className={`${selectClass} ${className}`}
+    >
+      <option value="">Sin asignar</option>
+      {gestores.map((g) => (
+        <option key={g.id} value={g.id}>
+          {g.full_name || g.email}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 type AccionPendiente =
   | { tipo: "rol"; userId: string; nombre: string; rolAnterior: Profile["role"]; rolNuevo: Profile["role"] }
   | {
@@ -125,9 +183,6 @@ export function AdminUserTable() {
     return <p className="text-sm text-slate-400">Cargando usuarios...</p>;
   }
 
-  const selectClass =
-    "rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt disabled:opacity-50";
-
   return (
     <div>
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
@@ -144,7 +199,7 @@ export function AdminUserTable() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Nombre o correo"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:w-auto sm:text-sm"
             />
           </div>
           {busqueda && (
@@ -161,7 +216,48 @@ export function AdminUserTable() {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
+          {/* Mobile: tarjetas. Los dos <select> no entran en una fila a 360px. */}
+          <ul className="space-y-3 md:hidden">
+            {pageItems.map((u) => (
+              <li key={u.id} className="rounded-xl border border-slate-200 p-4">
+                <p className="break-words font-medium text-slate-800">{u.full_name || "(sin nombre)"}</p>
+                <p className="break-words text-xs text-slate-500">{u.email}</p>
+
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <label htmlFor={`rol-${u.id}`} className="mb-1 block text-xs font-medium text-slate-600">
+                      Rol
+                    </label>
+                    <SelectRol
+                      id={`rol-${u.id}`}
+                      value={u.role}
+                      disabled={guardandoId === u.id}
+                      onChange={(rol) => solicitarCambioRol(u, rol)}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {u.role === "cliente" && (
+                    <div>
+                      <label htmlFor={`gestor-${u.id}`} className="mb-1 block text-xs font-medium text-slate-600">
+                        Gestor asignado
+                      </label>
+                      <SelectGestor
+                        id={`gestor-${u.id}`}
+                        value={u.gestor_id ?? ""}
+                        disabled={guardandoId === u.id}
+                        gestores={gestores}
+                        onChange={(gestorId) => solicitarCambioGestor(u, gestorId)}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden overflow-x-auto rounded-xl border border-slate-200 md:block">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
@@ -178,34 +274,20 @@ export function AdminUserTable() {
                       <p className="text-xs text-slate-500">{u.email}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <select
+                      <SelectRol
                         value={u.role}
                         disabled={guardandoId === u.id}
-                        onChange={(e) => solicitarCambioRol(u, e.target.value as Profile["role"])}
-                        className={selectClass}
-                      >
-                        {ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(rol) => solicitarCambioRol(u, rol)}
+                      />
                     </td>
                     <td className="px-4 py-3">
                       {u.role === "cliente" ? (
-                        <select
+                        <SelectGestor
                           value={u.gestor_id ?? ""}
                           disabled={guardandoId === u.id}
-                          onChange={(e) => solicitarCambioGestor(u, e.target.value)}
-                          className={selectClass}
-                        >
-                          <option value="">Sin asignar</option>
-                          {gestores.map((g) => (
-                            <option key={g.id} value={g.id}>
-                              {g.full_name || g.email}
-                            </option>
-                          ))}
-                        </select>
+                          gestores={gestores}
+                          onChange={(gestorId) => solicitarCambioGestor(u, gestorId)}
+                        />
                       ) : (
                         <span className="text-xs text-slate-400">N/A</span>
                       )}

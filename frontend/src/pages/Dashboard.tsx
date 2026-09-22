@@ -23,19 +23,19 @@ export function Dashboard() {
     profile?.full_name?.trim() || user?.email?.split("@")[0] || "usuario";
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-10">
+    <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
       <h1 className="text-2xl font-semibold text-cobalt mb-1">Hola, {displayName}</h1>
       <p className="text-slate-500 mb-8">
         {loading ? "Cargando tus consultas..." : `Tienes ${consultas.length} consultas registradas.`}
       </p>
 
-      <div className="rounded-xl border-2 border-cobalt bg-cobalt/5 p-6 mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col gap-4 rounded-xl border-2 border-cobalt bg-cobalt/5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
           <p className="font-semibold text-slate-900">¿Nuevo envío?</p>
           <p className="text-sm text-slate-600">Obtén tu diagnóstico en menos de 1 minuto.</p>
         </div>
-        <Link to="/consulta/nueva">
-          <Button>Nueva consulta</Button>
+        <Link to="/consulta/nueva" className="shrink-0">
+          <Button className="w-full sm:w-auto">Nueva consulta</Button>
         </Link>
       </div>
 
@@ -50,13 +50,13 @@ export function Dashboard() {
             <Link
               key={c.id}
               to={`/consulta/${c.id}`}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:border-cobalt transition-colors"
+              className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-cobalt"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <VerdictBadge nivel={c.nivel} />
-                <span className="text-sm text-slate-700 truncate max-w-xs">{c.input.descripcionItem}</span>
+                <span className="truncate text-sm text-slate-700">{c.input.descripcionItem}</span>
               </div>
-              <span className="text-xs text-slate-400">{c.input.paisDestino}</span>
+              <span className="shrink-0 text-xs text-slate-400">{c.input.paisDestino}</span>
             </Link>
           ))}
         </div>

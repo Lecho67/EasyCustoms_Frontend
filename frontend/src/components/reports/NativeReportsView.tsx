@@ -97,7 +97,7 @@ export function NativeReportsView() {
         </button>
       </div>
 
-      <div className="h-80 rounded-xl border border-slate-200 p-4">
+      <div className="h-64 rounded-xl border border-slate-200 p-3 sm:h-80 sm:p-4">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={datos}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />

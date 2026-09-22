@@ -42,7 +42,7 @@ const NotFound = lazy(() => import("@/pages/NotFound").then((m) => ({ default: m
 function Layout({ children }: { children: React.ReactNode }) {
   const { profile } = useAuth();
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
@@ -58,7 +58,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 function RouteFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-dvh flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-cobalt border-t-transparent rounded-full animate-spin" />
     </div>
   );

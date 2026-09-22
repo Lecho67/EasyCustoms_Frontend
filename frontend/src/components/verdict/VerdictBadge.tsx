@@ -10,8 +10,10 @@ const config = {
 export function VerdictBadge({ nivel }: { nivel: NivelVeredicto }) {
   const { bg, text, Icon, label } = config[nivel];
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${bg} ${text}`}>
-      <Icon className="w-3.5 h-3.5" />
+    <span
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${bg} ${text}`}
+    >
+      <Icon className="w-3.5 h-3.5 shrink-0" />
       {label}
     </span>
   );

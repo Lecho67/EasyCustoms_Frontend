@@ -66,7 +66,7 @@ export function GestorPanel() {
     });
 
   return (
-    <div className="max-w-4xl mx-auto mt-16 p-6">
+    <div className="max-w-4xl mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-bold text-cobalt mb-1">Mis clientes</h1>
       <p className="text-sm text-slate-500 mb-6">
         {cartera.length} cliente{cartera.length !== 1 && "s"} en tu cartera.
@@ -86,7 +86,7 @@ export function GestorPanel() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Nombre o correo"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm"
             />
           </div>
           {busqueda && (

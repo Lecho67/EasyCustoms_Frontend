@@ -197,13 +197,13 @@ export function CasoRevisionCard({ caso, currentUserId, onClose, onResuelto }: P
           </button>
         </div>
 
-        <div className="flex-1 space-y-6 p-6">
+        <div className="flex-1 space-y-6 p-5 sm:p-6">
           {/* Vista previa del paquete */}
           <section>
             <h3 className="mb-2 text-sm font-semibold text-slate-700">Vista previa del paquete</h3>
             <div className="space-y-2 rounded-xl border border-slate-200 p-4 text-sm">
               <p className="text-slate-800">{diagnostico?.input?.descripcionItem || caso.product_description}</p>
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-500">
+              <div className="grid grid-cols-1 gap-2 text-xs text-slate-500 sm:grid-cols-2">
                 <p>País destino: <span className="text-slate-700">{diagnostico?.input?.paisDestino || "—"}</span></p>
                 <p>Peso: <span className="text-slate-700">{diagnostico?.input?.pesoKg ? `${diagnostico.input.pesoKg} kg` : "—"}</span></p>
                 <p>Valor declarado: <span className="text-slate-700">{diagnostico?.input?.valorDeclaradoUsd ? `US$ ${diagnostico.input.valorDeclaradoUsd}` : "—"}</span></p>
@@ -232,7 +232,7 @@ export function CasoRevisionCard({ caso, currentUserId, onClose, onResuelto }: P
                 </div>
               )}
               {diagnostico?.desgloseImpuestos && (
-                <div className="grid grid-cols-2 gap-1 border-t border-slate-100 pt-2 text-xs text-slate-500">
+                <div className="grid grid-cols-1 gap-1 border-t border-slate-100 pt-2 text-xs text-slate-500 sm:grid-cols-2">
                   <p>Flete: US$ {diagnostico.desgloseImpuestos.flete}</p>
                   <p>Arancel: US$ {diagnostico.desgloseImpuestos.arancel}</p>
                   <p>Tasa aplicada: {diagnostico.desgloseImpuestos.tasaArancelAplicada}%</p>

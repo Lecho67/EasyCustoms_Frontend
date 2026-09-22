@@ -37,7 +37,7 @@ for (const rol of ROLES) {
 
     await page.goto("/login");
     await page.getByLabel("Correo electrónico").fill(rol.email);
-    await page.getByLabel("Contraseña").fill(rol.password);
+    await page.getByLabel("Contraseña", { exact: true }).fill(rol.password);
     await page.locator('form button[type="submit"]').click();
 
     // Login.tsx navega a /dashboard cuando el AuthContext confirma la sesión.

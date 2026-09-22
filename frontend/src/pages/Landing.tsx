@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/Button";
 
 export function Landing() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-24 text-center">
+    <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center">
       <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-cobalt mb-6">
         Sabe si tu envío pasará la aduana, antes de despacharlo.
       </h1>

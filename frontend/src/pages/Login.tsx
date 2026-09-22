@@ -78,7 +78,7 @@ export function Login() {
 
   if (mode === 'forgotPassword') {
     return (
-      <div className="max-w-md mx-auto mt-16 p-6">
+      <div className="max-w-md mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
         <button
           type="button"
           onClick={() => cambiarModo('signIn')}
@@ -120,7 +120,7 @@ export function Login() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-6">
+    <div className="max-w-md mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="mb-1 text-2xl font-bold text-cobalt">
         {mode === 'signIn' ? 'Iniciar sesión' : 'Crear cuenta'}
       </h1>

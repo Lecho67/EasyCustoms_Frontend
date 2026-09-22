@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AgentPanel } from "./AgentPanel";
 import { fetchColaDeRevision, type CasoEnCola } from "@/lib/agentService";
@@ -36,13 +36,21 @@ beforeEach(() => {
   fetchMock.mockReset().mockResolvedValue([]);
 });
 
+/**
+ * Cada caso se renderiza dos veces: tarjeta (mobile) y fila de tabla
+ * (desktop), una de las dos oculta por CSS. jsdom no aplica CSS, así que las
+ * consultas se acotan a la tabla para no encontrar duplicados.
+ */
+const tabla = () => within(screen.getByRole("table"));
+
 describe("AgentPanel", () => {
   it("carga y muestra los casos de la cola", async () => {
     fetchMock.mockResolvedValue([caso("c1", "Colombia"), caso("c2", "México")]);
     render(<AgentPanel />);
 
-    expect(await screen.findByText("Cliente c1")).toBeInTheDocument();
-    expect(screen.getByText("Cliente c2")).toBeInTheDocument();
+    await screen.findByRole("table");
+    expect(tabla().getByText("Cliente c1")).toBeInTheDocument();
+    expect(tabla().getByText("Cliente c2")).toBeInTheDocument();
     expect(screen.getByText(/2 de 2 casos/i)).toBeInTheDocument();
   });
 
@@ -56,12 +64,12 @@ describe("AgentPanel", () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValue([caso("c1", "Colombia"), caso("c2", "México")]);
     render(<AgentPanel />);
-    await screen.findByText("Cliente c1");
+    await screen.findByRole("table");
 
     await user.selectOptions(screen.getByLabelText("País destino"), "México");
 
-    expect(screen.queryByText("Cliente c1")).not.toBeInTheDocument();
-    expect(screen.getByText("Cliente c2")).toBeInTheDocument();
+    expect(tabla().queryByText("Cliente c1")).not.toBeInTheDocument();
+    expect(tabla().getByText("Cliente c2")).toBeInTheDocument();
     expect(screen.getByText(/1 de 2 casos/i)).toBeInTheDocument();
   });
 
@@ -69,22 +77,22 @@ describe("AgentPanel", () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValue([caso("c1", "Colombia"), caso("c2", "México")]);
     render(<AgentPanel />);
-    await screen.findByText("Cliente c1");
+    await screen.findByRole("table");
 
     await user.selectOptions(screen.getByLabelText("País destino"), "México");
     await user.click(screen.getByText("Limpiar filtros"));
 
-    expect(screen.getByText("Cliente c1")).toBeInTheDocument();
-    expect(screen.getByText("Cliente c2")).toBeInTheDocument();
+    expect(tabla().getByText("Cliente c1")).toBeInTheDocument();
+    expect(tabla().getByText("Cliente c2")).toBeInTheDocument();
   });
 
   it("'Auditar caso' abre el drawer de revisión", async () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValue([caso("c1", "Colombia")]);
     render(<AgentPanel />);
-    await screen.findByText("Cliente c1");
+    await screen.findByRole("table");
 
-    await user.click(screen.getByText("Auditar caso"));
+    await user.click(tabla().getByText("Auditar caso"));
 
     expect(screen.getByText("drawer:c1")).toBeInTheDocument();
   });
@@ -95,13 +103,13 @@ describe("AgentPanel", () => {
       Array.from({ length: 10 }, (_, i) => caso(`c${i + 1}`, "Colombia")),
     );
     render(<AgentPanel />);
-    await screen.findByText("Cliente c1");
+    await screen.findByRole("table");
 
-    expect(screen.queryByText("Cliente c9")).not.toBeInTheDocument();
+    expect(tabla().queryByText("Cliente c9")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /siguiente/i }));
 
-    expect(screen.queryByText("Cliente c1")).not.toBeInTheDocument();
-    expect(screen.getByText("Cliente c9")).toBeInTheDocument();
+    expect(tabla().queryByText("Cliente c1")).not.toBeInTheDocument();
+    expect(tabla().getByText("Cliente c9")).toBeInTheDocument();
   });
 });

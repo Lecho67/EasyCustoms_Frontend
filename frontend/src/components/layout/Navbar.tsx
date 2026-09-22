@@ -102,8 +102,8 @@ export function Navbar() {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
-    <nav className="sticky top-0 z-30 bg-white border-b border-slate-200">
-      <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+    <nav className="sticky top-0 z-30 border-b border-slate-200 bg-white pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
         <Link to="/" aria-label="Easy CUSTOMS — inicio" className="shrink-0">
           <BrandLogo variant="full" className="hidden sm:inline-flex" />
           <BrandLogo variant="isotype" className="sm:hidden" />
@@ -111,7 +111,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-4 text-sm">
           {!user && (
-            <Link to="/pitch" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+            <Link to="/pitch" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
               Presentación
             </Link>
           )}
@@ -119,13 +119,13 @@ export function Navbar() {
           {/* Cliente: solo enlaces operacionales de mayor frecuencia */}
           {user && role === "cliente" && (
             <>
-              <Link to="/dashboard/historial" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+              <Link to="/dashboard/historial" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
                 Historial
               </Link>
-              <Link to="/casillero" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+              <Link to="/casillero" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
                 Casillero
               </Link>
-              <Link to="/consulta/nueva" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+              <Link to="/consulta/nueva" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
                 Nueva consulta
               </Link>
             </>
@@ -134,10 +134,10 @@ export function Navbar() {
           {/* Gestor: acceso a su cartera de clientes */}
           {user && role === "gestor" && (
             <>
-              <Link to="/gestor" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+              <Link to="/gestor" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
                 Mis clientes
               </Link>
-              <Link to="/reportes" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+              <Link to="/reportes" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
                 Reportes
               </Link>
             </>
@@ -146,13 +146,13 @@ export function Navbar() {
           {/* Agente: cola de revisión + documentos */}
           {user && role === "agente" && (
             <>
-              <Link to="/panel-agente" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+              <Link to="/panel-agente" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
                 Cola de revisión
               </Link>
-              <Link to="/panel-agente/documentos" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+              <Link to="/panel-agente/documentos" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
                 Documentos
               </Link>
-              <Link to="/panel-agente/kyc" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+              <Link to="/panel-agente/kyc" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
                 Verificación KYC
               </Link>
             </>
@@ -163,11 +163,11 @@ export function Navbar() {
             <>
               <Link
                 to="/admin"
-                className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline font-medium"
+                className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline font-medium"
               >
                 Administración
               </Link>
-              <div className="relative hidden sm:block" ref={panelesRef}>
+              <div className="relative hidden lg:block" ref={panelesRef}>
                 <button
                   onClick={() => {
                     setIsPanelesOpen((prev) => !prev);
@@ -208,7 +208,7 @@ export function Navbar() {
             </>
           )}
 
-          <Link to="/herramientas" className="text-slate-500 hover:text-slate-900 transition-colors hidden sm:inline">
+          <Link to="/herramientas" className="text-slate-500 hover:text-slate-900 transition-colors hidden lg:inline">
             Herramientas
           </Link>
 
@@ -216,7 +216,7 @@ export function Navbar() {
 
           {/* Perfil (dropdown) - solo escritorio/tablet, en mobile vive dentro del drawer */}
           {user ? (
-            <div className="relative hidden sm:block" ref={menuRef}>
+            <div className="relative hidden lg:block" ref={menuRef}>
               <button
                 onClick={() => {
                   setIsOpen((prev) => !prev);
@@ -224,8 +224,10 @@ export function Navbar() {
                 }}
                 className="flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition-colors font-medium"
               >
-                <User className="w-4 h-4" />
-                <span>Mi Perfil{profile?.full_name ? ` · ${profile.full_name}` : role ? ` · ${role}` : ""}</span>
+                <User className="w-4 h-4 shrink-0" />
+                <span className="max-w-[16ch] truncate xl:max-w-[24ch]">
+                  Mi Perfil{profile?.full_name ? ` · ${profile.full_name}` : role ? ` · ${role}` : ""}
+                </span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
               </button>
 
@@ -288,7 +290,7 @@ export function Navbar() {
           ) : (
             <Link
               to="/login"
-              className="bg-cobalt hover:bg-cobalt/90 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm hidden sm:inline-block"
+              className="bg-cobalt hover:bg-cobalt/90 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm hidden lg:inline-block"
             >
               Iniciar sesión
             </Link>
@@ -298,7 +300,7 @@ export function Navbar() {
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Abrir menú"
-            className="block sm:hidden text-slate-600 hover:text-slate-900 transition-colors"
+            className="-mr-2.5 block p-2.5 text-slate-600 transition-colors hover:text-slate-900 lg:hidden"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -307,7 +309,7 @@ export function Navbar() {
 
       {/* --- Drawer móvil --- */}
       <div
-        className={`fixed inset-0 z-40 sm:hidden ${isMobileMenuOpen ? "" : "pointer-events-none"}`}
+        className={`fixed inset-0 z-40 lg:hidden ${isMobileMenuOpen ? "" : "pointer-events-none"}`}
         aria-hidden={!isMobileMenuOpen}
       >
         {/* Backdrop */}
@@ -324,18 +326,22 @@ export function Navbar() {
           role="dialog"
           aria-modal="true"
           aria-label="Menú"
-          className={`absolute right-0 top-0 h-full w-[85%] max-w-sm bg-white border-l border-slate-200 flex flex-col transition-transform duration-200 ease-out ${
+          className={`absolute right-0 top-0 h-full w-[85%] max-w-sm bg-white border-l border-slate-200 flex flex-col pr-[env(safe-area-inset-right)] transition-transform duration-200 ease-out ${
             isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
             <span className="font-semibold text-slate-900">Menú</span>
-            <button onClick={closeMobileMenu} aria-label="Cerrar menú" className="text-slate-500 hover:text-slate-900">
+            <button
+              onClick={closeMobileMenu}
+              aria-label="Cerrar menú"
+              className="-m-2 p-2 text-slate-500 hover:text-slate-900"
+            >
               <X className="w-6 h-6" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 text-sm">
+          <div className="flex-1 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-sm">
             {!user && (
               <div className="flex flex-col gap-2">
                 <Link

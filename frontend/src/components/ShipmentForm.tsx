@@ -873,7 +873,9 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
         </SectionCard>
       )}
 
-      <div className="flex items-center justify-between pt-2">
+      {/* Mobile: barra fija abajo (los pasos son largos y había que
+          scrollear hasta el fondo para avanzar). Desktop: en flujo normal. */}
+      <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-2">
         {step > 1 ? (
           <Button type="button" variant="secondary" onClick={handleBack}>
             Anterior

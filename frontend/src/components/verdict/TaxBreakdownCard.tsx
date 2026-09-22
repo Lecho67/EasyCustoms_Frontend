@@ -8,14 +8,14 @@ interface TaxBreakdownCardProps {
 
 export function TaxBreakdownCard({ desglose, partidaArancelariaTentativa }: TaxBreakdownCardProps) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
       <p className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
         <Receipt className="w-4 h-4" /> Desglose de impuestos estimados
       </p>
 
-      <div className="flex items-center justify-between text-xs mb-4">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
         <span className="text-slate-500">Partida arancelaria tentativa</span>
-        <span className="font-mono-data text-slate-700">{partidaArancelariaTentativa}</span>
+        <span className="font-mono-data min-w-0 break-words text-slate-700">{partidaArancelariaTentativa}</span>
       </div>
 
       {desglose ? (

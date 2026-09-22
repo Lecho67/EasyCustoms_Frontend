@@ -26,14 +26,14 @@ export function DocumentCard({ doc, onVer, onEliminar }: DocumentCardProps) {
       <div className="flex items-center gap-3 pt-1">
         <button
           onClick={() => onVer(doc)}
-          className="flex items-center gap-1.5 text-sm text-cobalt font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-cobalt rounded"
+          className="flex min-h-11 items-center gap-1.5 rounded text-sm font-medium text-cobalt hover:underline focus:outline-none focus:ring-2 focus:ring-cobalt"
         >
           <Eye className="w-3.5 h-3.5" /> Ver documento
         </button>
         {onEliminar && (
           <button
             onClick={() => onEliminar(doc)}
-            className="flex items-center gap-1.5 text-sm text-red-600 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+            className="flex min-h-11 items-center gap-1.5 rounded text-sm font-medium text-red-600 hover:underline focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <Trash2 className="w-3.5 h-3.5" /> Eliminar
           </button>

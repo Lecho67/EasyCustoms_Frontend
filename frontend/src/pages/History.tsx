@@ -40,11 +40,11 @@ export function History() {
     });
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-10">
-      <div className="flex items-center justify-between gap-4 mb-6">
+    <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <h1 className="text-2xl font-semibold text-cobalt">Historial de consultas</h1>
-        <Link to="/consulta/nueva">
-          <Button className="whitespace-nowrap">+ Nueva consulta</Button>
+        <Link to="/consulta/nueva" className="shrink-0">
+          <Button className="w-full whitespace-nowrap sm:w-auto">+ Nueva consulta</Button>
         </Link>
       </div>
 
@@ -55,7 +55,7 @@ export function History() {
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar por ítem o país destino..."
-            className="w-full rounded-xl border border-slate-300 pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent"
+            className="w-full rounded-xl border border-slate-300 pl-10 pr-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent"
           />
         </div>
       </div>
@@ -86,13 +86,13 @@ export function History() {
               key={c.id}
               type="button"
               onClick={() => setSeleccionada(c)}
-              className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:border-cobalt transition-colors text-left"
+              className="flex w-full flex-col gap-2 rounded-xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-cobalt sm:flex-row sm:items-center sm:justify-between sm:gap-3"
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex min-w-0 items-center gap-3">
                 <VerdictBadge nivel={c.nivel} />
-                <span className="text-sm text-slate-700 truncate max-w-xs">{c.input.descripcionItem}</span>
+                <span className="truncate text-sm text-slate-700">{c.input.descripcionItem}</span>
               </div>
-              <div className="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+              <div className="flex shrink-0 items-center gap-3 text-xs text-slate-400">
                 <span>{c.input.paisDestino}</span>
                 <span>{new Date(c.createdAt).toLocaleDateString()}</span>
               </div>
@@ -121,11 +121,11 @@ export function History() {
               <p className="text-slate-800 font-medium">{seleccionada.input.paisDestino}</p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <Link to={`/consulta/${seleccionada.id}`} className="flex-1">
                 <Button className="w-full">Ver diagnóstico completo</Button>
               </Link>
-              <Button variant="secondary" onClick={() => setSeleccionada(null)}>
+              <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setSeleccionada(null)}>
                 Cerrar
               </Button>
             </div>

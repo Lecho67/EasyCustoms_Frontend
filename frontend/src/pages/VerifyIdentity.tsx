@@ -116,7 +116,7 @@ export function VerifyIdentity() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-16 mb-16 p-6">
+    <div className="max-w-2xl mx-auto mt-10 sm:mt-16 mb-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-bold text-cobalt mb-1">Verificar identidad</h1>
       <p className="text-slate-600 mb-6">
         Por normativa aduanera (Ley 1581 de 2012) necesitamos verificar tu identidad antes de

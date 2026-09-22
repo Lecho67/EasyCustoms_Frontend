@@ -22,7 +22,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             id={inputId}
             ref={ref}
-            className={`w-full rounded-xl border p-3 ${endAdornment ? "pr-11" : ""} focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent ${
+            // text-base explícito: con menos de 16px iOS hace zoom al enfocar.
+            className={`w-full rounded-xl border p-3 text-base ${endAdornment ? "pr-11" : ""} focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent ${
               error ? "border-red-400" : "border-slate-300"
             } ${className}`}
             {...props}

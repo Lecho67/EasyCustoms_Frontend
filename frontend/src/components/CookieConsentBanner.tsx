@@ -57,7 +57,7 @@ export function CookieConsentBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white px-4 py-4 sm:px-6">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6">
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
         <p className="text-sm text-slate-600">
           Usamos cookies y almacenamiento local para mantener tu sesión y, si aceptás, para medir el uso del
@@ -67,11 +67,11 @@ export function CookieConsentBanner() {
           </Link>
           .
         </p>
-        <div className="flex shrink-0 gap-2">
-          <Button variant="secondary" onClick={rechazar} className="px-4 py-2 text-sm">
+        <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+          <Button variant="secondary" onClick={rechazar} className="flex-1 px-4 py-2 text-sm sm:flex-none">
             Rechazar
           </Button>
-          <Button onClick={aceptar} className="px-4 py-2 text-sm">
+          <Button onClick={aceptar} className="flex-1 px-4 py-2 text-sm sm:flex-none">
             Aceptar
           </Button>
         </div>

@@ -25,16 +25,21 @@ export function Modal({ open, onClose, children }: ModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 flex items-stretch justify-center sm:items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
+      {/* Mobile: hoja a pantalla completa. Desktop (sm+): tarjeta centrada. */}
       <div
         ref={dialogRef}
-        className="relative bg-white rounded-xl border border-slate-200 max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 shadow"
+        className="relative w-full overflow-y-auto bg-white p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow sm:max-h-[85vh] sm:max-w-lg sm:rounded-xl sm:border sm:border-slate-200 sm:pb-6"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+          className="absolute top-2 right-2 rounded p-2 text-slate-400 transition-colors hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
           aria-label="Cerrar"
         >
           <X className="w-5 h-5" />

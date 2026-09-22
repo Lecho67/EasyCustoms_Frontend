@@ -88,7 +88,7 @@ export function DocumentReviewCard({ doc, onResuelto }: Props) {
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
             placeholder="Motivo (obligatorio si rechazas)"
-            className="w-full border rounded px-2 py-1.5 text-sm mb-2"
+            className="mb-2 w-full rounded border px-2 py-1.5 text-base sm:text-sm"
             rows={2}
           />
 
@@ -96,14 +96,14 @@ export function DocumentReviewCard({ doc, onResuelto }: Props) {
             <button
               onClick={() => handleRevisar("aprobado")}
               disabled={loading}
-              className="text-sm bg-green-600 text-white px-3 py-1.5 rounded"
+              className="min-h-11 flex-1 rounded bg-green-600 px-4 text-sm text-white sm:flex-none"
             >
               Aprobar
             </button>
             <button
               onClick={() => handleRevisar("rechazado")}
               disabled={loading}
-              className="text-sm bg-red-600 text-white px-3 py-1.5 rounded"
+              className="min-h-11 flex-1 rounded bg-red-600 px-4 text-sm text-white sm:flex-none"
             >
               Rechazar
             </button>

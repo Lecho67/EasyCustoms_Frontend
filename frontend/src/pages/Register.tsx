@@ -38,7 +38,7 @@ export function Register() {
 
   if (success) {
     return (
-      <div className="max-w-md mx-auto mt-24 p-6 text-center">
+      <div className="max-w-md mx-auto mt-16 sm:mt-24 px-4 sm:px-6 lg:px-8 py-6 text-center">
         <CheckCircle2 className="mx-auto mb-4 h-10 w-10 text-emerald-500" />
         <h1 className="mb-2 text-lg font-semibold text-cobalt">Registro exitoso</h1>
         <p className="text-sm text-slate-500">Te estamos redirigiendo al inicio de sesión...</p>
@@ -47,7 +47,7 @@ export function Register() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-6">
+    <div className="max-w-md mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="mb-1 text-2xl font-bold text-cobalt">Crear cuenta</h1>
       <p className="mb-6 text-sm text-slate-500">
         Creá tu cuenta para empezar a importar con Easy CUSTOMS.

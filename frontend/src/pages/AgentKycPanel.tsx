@@ -86,7 +86,7 @@ export function AgentKycPanel() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-16 p-6">
+    <div className="max-w-4xl mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-2 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-cobalt">Verificación de Identidad (KYC)</h1>
         <button
@@ -118,7 +118,7 @@ export function AgentKycPanel() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Nombre, correo o documento"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm"
             />
           </div>
           <div>
@@ -129,7 +129,7 @@ export function AgentKycPanel() {
               id="kyc-tipo-doc"
               value={tipoDoc}
               onChange={(e) => setTipoDoc(e.target.value as "todos" | DocumentType)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm"
             >
               <option value="todos">Todos</option>
               {TIPOS_DOC.map((t) => (
@@ -147,7 +147,7 @@ export function AgentKycPanel() {
               id="kyc-orden"
               value={orden}
               onChange={(e) => setOrden(e.target.value as Orden)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm"
             >
               <option value="antiguas">Más antiguas primero</option>
               <option value="recientes">Más recientes primero</option>

@@ -32,7 +32,7 @@ export function Select({ options, value, onChange, placeholder = "Selecciona..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar..."
-            className="w-full px-3 py-2 mb-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cobalt"
+            className="w-full px-3 py-2 mb-2 text-base rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cobalt"
           />
           <div className="max-h-48 overflow-y-auto">
             {filtered.map((option) => (
@@ -44,7 +44,7 @@ export function Select({ options, value, onChange, placeholder = "Selecciona..."
                   setOpen(false);
                   setSearch("");
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg hover:bg-cobalt/10 text-sm text-slate-700"
+                className="flex min-h-11 w-full items-center rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-cobalt/10"
               >
                 {option}
               </button>

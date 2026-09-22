@@ -116,7 +116,7 @@ export function SupportChatWidget() {
         type="button"
         onClick={() => setAbierto((v) => !v)}
         aria-label={abierto ? "Cerrar chat de ayuda" : "Abrir chat de ayuda"}
-        className="fixed bottom-6 left-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-cobalt text-white shadow-lg transition-colors hover:bg-cobalt-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cian focus-visible:ring-offset-2"
+        className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-cobalt text-white shadow-lg transition-colors hover:bg-cobalt-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cian focus-visible:ring-offset-2"
       >
         {abierto ? <X className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
       </button>
@@ -126,7 +126,7 @@ export function SupportChatWidget() {
           ref={panelRef}
           role="dialog"
           aria-label="Chat de ayuda"
-          className="fixed bottom-24 left-6 z-40 flex h-[28rem] max-h-[70vh] w-[calc(100vw-3rem)] max-w-sm flex-col rounded-xl border border-slate-200 bg-white shadow-xl"
+          className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-6 z-40 flex h-[28rem] max-h-[70svh] w-[calc(100vw-3rem)] max-w-sm flex-col rounded-xl border border-slate-200 bg-white shadow-xl"
         >
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <span className="text-sm font-semibold text-slate-900">Chat de ayuda</span>
@@ -134,7 +134,7 @@ export function SupportChatWidget() {
               type="button"
               onClick={() => setAbierto(false)}
               aria-label="Cerrar"
-              className="text-slate-400 hover:text-slate-700"
+              className="-m-2 p-2 text-slate-400 hover:text-slate-700"
             >
               <X className="h-4 w-4" />
             </button>
@@ -189,13 +189,13 @@ export function SupportChatWidget() {
               onChange={(e) => setEntrada(e.target.value)}
               disabled={enviando}
               placeholder="Escribí tu pregunta..."
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent disabled:bg-slate-50"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent disabled:bg-slate-50"
             />
             <button
               type="submit"
               disabled={enviando || !entrada.trim()}
               aria-label="Enviar"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cobalt text-white transition-colors hover:bg-cobalt-600 disabled:bg-slate-200 disabled:text-slate-400"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cobalt text-white transition-colors hover:bg-cobalt-600 disabled:bg-slate-200 disabled:text-slate-400"
             >
               <Send className="h-4 w-4" />
             </button>

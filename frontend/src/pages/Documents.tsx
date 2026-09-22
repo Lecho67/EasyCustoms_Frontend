@@ -80,7 +80,7 @@ export default function Documents() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-cobalt">Centro de Documentación Aduanera</h1>
@@ -89,7 +89,7 @@ export default function Documents() {
           </p>
         </div>
 
-        <div>
+        <div className="w-full sm:w-auto">
           <input
             ref={fileInputRef}
             type="file"
@@ -102,7 +102,7 @@ export default function Documents() {
           <label
             htmlFor={soloLectura ? undefined : "upload-doc"}
             aria-disabled={soloLectura}
-            className={`flex items-center gap-2 bg-cobalt text-white px-5 py-2.5 rounded-lg font-medium transition ${
+            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-cobalt px-5 py-2.5 font-medium text-white transition sm:w-auto ${
               soloLectura
                 ? "opacity-50 cursor-not-allowed"
                 : "hover:bg-cobalt/90 cursor-pointer"
@@ -150,9 +150,9 @@ export default function Documents() {
           <h3 className="text-lg font-semibold text-slate-900 mb-2">Eliminar documento</h3>
           <p className="text-sm text-slate-600 mb-6">
             ¿Seguro que quieres eliminar{" "}
-            <span className="font-medium text-slate-900">{eliminando.file_name}</span>? Esta acción no se puede deshacer.
+            <span className="break-words font-medium text-slate-900">{eliminando.file_name}</span>? Esta acción no se puede deshacer.
           </p>
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setEliminando(null)} className="px-4 py-2">
               Cancelar
             </Button>
