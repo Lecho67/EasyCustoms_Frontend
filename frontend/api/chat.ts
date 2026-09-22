@@ -1,5 +1,3 @@
-import { FAQ_ITEMS } from "../src/lib/faqData";
-
 /**
  * Vercel Serverless Function — POST /api/chat.
  *
@@ -7,6 +5,13 @@ import { FAQ_ITEMS } from "../src/lib/faqData";
  * solo para que GEMINI_API_KEY nunca llegue al bundle del cliente (una var
  * VITE_* quedaría expuesta en el JS servido). El frontend llama a esta ruta
  * same-origin vía `src/lib/chatService.ts`.
+ *
+ * A propósito NO importa nada de `src/` (p.ej. `src/lib/faqData.ts`): Vercel
+ * compila esta función como ESM standalone y no empaqueta imports relativos
+ * que cruzan fuera de `api/` (falla en runtime con ERR_MODULE_NOT_FOUND, ya
+ * que Node ESM exige extensión explícita y ese archivo no viaja con la
+ * función). El contenido de las FAQ se duplica acá abajo; si cambia
+ * `faqData.ts`, actualizar también `FAQ_REFERENCIA`.
  */
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
@@ -34,7 +39,33 @@ function esTurnoValido(valor: unknown): valor is Turno {
   return (t.autor === "cliente" || t.autor === "asistente") && typeof t.texto === "string";
 }
 
-const FAQ_REFERENCIA = FAQ_ITEMS.map((item) => `P: ${item.pregunta}\nR: ${item.respuesta}`).join("\n\n");
+// Duplicado a propósito de src/lib/faqData.ts — ver comentario arriba.
+const FAQ_REFERENCIA = `P: ¿Cuál es el valor máximo para importar sin pagar aranceles?
+R: En Colombia, los envíos de mensajería con valor FOB de hasta USD 200 pueden estar exentos de arancel bajo el régimen de tráfico postal, aunque siguen pagando IVA si superan los USD 200. Este límite puede cambiar según la normativa vigente de la DIAN, así que confirmá siempre el valor actualizado antes de tu envío.
+
+P: ¿Qué productos están restringidos o prohibidos para importar?
+R: Entre otros: armas y municiones, sustancias controladas, medicamentos sin registro INVIMA, productos que infrinjan derechos de marca, baterías de litio sueltas (fuera de un dispositivo) sin declaración especial, y productos de origen animal o vegetal sin permiso del ICA. Usá 'Nueva consulta' para chequear tu producto puntual.
+
+P: ¿Qué es la partida arancelaria y por qué es importante?
+R: Es el código HS que clasifica tu producto según un estándar internacional y determina qué arancel e impuestos aplican. Una clasificación incorrecta puede generar retrasos, multas o el bloqueo del envío en aduana.
+
+P: ¿Qué es el casillero virtual y cómo funciona?
+R: Es una dirección física en el país de origen que te asignamos para tus compras online. Cuando el paquete llega, lo consolidamos y lo enviamos a tu país. Podés ver el estado de tus paquetes en la sección Casillero de tu panel.
+
+P: ¿Cuánto tarda un paquete en llegar desde el casillero?
+R: Depende del método de envío y del país de destino, pero en general entre 5 y 15 días hábiles desde que sale del casillero, sin contar el tiempo de liberación en aduana si tu envío queda en revisión.
+
+P: ¿Puedo consolidar varias compras en un solo envío?
+R: Sí. Podés recibir varios paquetes en tu casillero y pedir que se consoliden en un único envío, lo que suele reducir el costo de flete frente a enviarlos por separado.
+
+P: ¿Cómo se calculan los tributos de mi envío?
+R: Se calculan sobre el valor CIF (costo + seguro + flete), aplicando la tasa de arancel de la partida arancelaria del producto, más IVA cuando aplica. Podés ver un desglose estimado (flete, arancel y total) en el resultado de cada consulta.
+
+P: ¿Qué métodos de pago aceptan para los tributos de aduana?
+R: Los tributos de nacionalización generalmente se pagan a través de la agencia de aduanas o el operador logístico antes de la entrega final. Los métodos varían según el operador; consultá con tu agente asignado los detalles de tu envío.
+
+P: ¿Qué pasa si mi envío queda en Precaución o Bloqueo?
+R: 'Precaución' generalmente requiere documentación adicional (factura, permisos) antes de continuar. 'Bloqueo' significa que el envío no cumple la normativa vigente y no puede nacionalizarse sin resolver la causa. En ambos casos, un agente humano revisa el caso desde el Panel de Agente.`;
 
 const SYSTEM_INSTRUCTION = `Sos el asistente de soporte de Easy CUSTOMS, una plataforma de asesoría aduanera y evaluación de envíos internacionales para Colombia.
 
