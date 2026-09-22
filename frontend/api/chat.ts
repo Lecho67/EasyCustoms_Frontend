@@ -132,7 +132,15 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         body: JSON.stringify({
           contents,
           systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
-          generationConfig: { temperature: 0.4, maxOutputTokens: 400 },
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 800,
+            // gemini-3.6-flash gasta parte del presupuesto en razonamiento
+            // interno antes de escribir la respuesta; sin esto, con un
+            // maxOutputTokens chico se quedaba sin tokens para el texto
+            // final (finishReason MAX_TOKENS, content vacío).
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
       }
     );
