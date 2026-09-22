@@ -98,11 +98,22 @@ export type HsCodeSuggestionOutcome =
   | { status: "low_confidence" }
   | { status: "error" };
 
-/** Timeout del lado del cliente para /hs-code-suggestion. Un poco por
- * encima del timeout del backend hacia Ollama (OLLAMA_MAPPER_TIMEOUT_MS,
- * 8s por defecto) para no cortar la petición antes de que el propio
- * backend termine de degradar a su fallback determinista. */
-const HS_SUGGESTION_TIMEOUT_MS = 10_000;
+/** Timeout del lado del cliente para /hs-code-suggestion. El backend ya no
+ * llama a un solo proveedor: `mapProductToHsCode` prueba una cascada de
+ * fallback jerárquico (Gemini P1 -> Gemini P2 -> Ollama, ver
+ * hsCodeMapper.ts) y cada nivel que falla se prueba con el siguiente antes
+ * de responder. En el peor caso (P1 y P2 fallan, ambos agotando su propio
+ * timeout, y el que resuelve es Ollama) la latencia es aproximadamente
+ * 2×GEMINI_TIMEOUT_MS + OLLAMA_MAPPER_TIMEOUT_MS del backend (por defecto
+ * 10s + 10s + 8s = 28s). Este valor debe quedar cómodamente por encima de
+ * esa suma — si se corta antes, el frontend aborta la petición (AbortError)
+ * mientras el backend sigue clasificando en segundo plano y sí produce un
+ * `hs_code` válido, pero la respuesta llega a una conexión ya cerrada: el
+ * campo se queda vacío sin ningún error visible aunque la IA sí funcionó
+ * (bug ya visto: solo "fallaba" cuando el nivel 1 de Gemini no respondía
+ * directo). No bloquea el resto del wizard: la petición corre en segundo
+ * plano al pasar del Paso 2 al Paso 3. */
+const HS_SUGGESTION_TIMEOUT_MS = 35_000;
 
 /**
  * Sugerencia de HS code standalone (`POST /api/v1/shipments/hs-code-suggestion`),
