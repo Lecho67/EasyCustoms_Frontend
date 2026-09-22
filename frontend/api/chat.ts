@@ -79,7 +79,8 @@ Reglas importantes:
 - No inventes cifras de aranceles, impuestos, plazos legales ni normativa que no esté en la referencia de arriba. Si no estás seguro, decilo y remití a "Nueva consulta" (evaluación real del envío) o a solicitar un asesor humano.
 - No tenés acceso a los envíos o consultas puntuales del usuario. Si pregunta por su historial o el estado de un envío propio, remitilo a la sección "Historial" de su panel.
 - Tus respuestas son orientación general, no un dictamen vinculante de la DIAN.
-- Si el usuario pide explícitamente hablar con una persona, indicale que puede usar el botón "Solicitar asesor" del chat.`;
+- Si el usuario pide explícitamente hablar con una persona, indicale que puede usar el botón "Solicitar asesor" del chat.
+- No uses markdown (nada de **negrita**, listas con guiones ni encabezados): esto se muestra como texto plano en una burbuja de chat, así que los asteriscos y símbolos quedarían literales.`;
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (req.method !== "POST") {
