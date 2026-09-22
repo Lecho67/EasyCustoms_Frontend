@@ -59,9 +59,13 @@ const FRASES_MI_HISTORIAL = [
   "por que mi",
   "porque mi",
   "resultado de mi",
+  // Palabras sueltas: en este chat (siempre del cliente autenticado sobre sí
+  // mismo) "consulta(s)" alcanza como señal, sin necesitar el "mi/mis".
+  "consulta",
+  "consultas",
 ];
 
-const FRASES_MAS_RECIENTE = ["ultima", "ultimo", "reciente", "historial"];
+const FRASES_MAS_RECIENTE = ["ultima", "ultimo", "reciente", "historial", "consulta", "consultas"];
 
 function coincideAlguna(textoNormalizado: string, frases: string[]): boolean {
   return frases.some((frase) => textoNormalizado.includes(frase));

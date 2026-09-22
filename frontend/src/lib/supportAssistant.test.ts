@@ -111,6 +111,20 @@ describe("responderPregunta — historial propio", () => {
     expect(resultado).toEqual({ tipo: "consultas", diagnosticos: misConsultas });
   });
 
+  it("la palabra suelta 'consultas' (sin 'mi') también dispara el listado reciente", () => {
+    // Regresión: un cliente real escribió solo "Consultas" y caía en FAQ sin
+    // resultado en vez de mostrarle su historial.
+    const misConsultas = [diag("d1", "Celular"), diag("d2", "Audífonos")];
+    expect(responderPregunta("Consultas", misConsultas)).toEqual({
+      tipo: "consultas",
+      diagnosticos: misConsultas,
+    });
+    expect(responderPregunta("consulta", misConsultas)).toEqual({
+      tipo: "consultas",
+      diagnosticos: misConsultas,
+    });
+  });
+
   it("no busca en el historial sin una señal explícita de 'mi/mis'", () => {
     // "celular" solo, sin "mi consulta"/"estado de mi"/etc., es una pregunta
     // general -> debe ir a buscar FAQ, no al historial.
