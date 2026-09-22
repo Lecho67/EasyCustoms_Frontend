@@ -105,7 +105,15 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     return;
   }
 
-  const historial = Array.isArray(body.historial) ? body.historial.filter(esTurnoValido).slice(-MAX_HISTORIAL) : [];
+  const historialCrudo = Array.isArray(body.historial)
+    ? body.historial.filter(esTurnoValido).slice(-MAX_HISTORIAL)
+    : [];
+  // Gemini exige que la conversación empiece en role "user" — el primer
+  // mensaje real suele ser el saludo del asistente (MENSAJE_BIENVENIDA en
+  // SupportChatWidget), así que se descarta todo lo anterior al primer
+  // turno del cliente.
+  const primerTurnoCliente = historialCrudo.findIndex((t) => t.autor === "cliente");
+  const historial = primerTurnoCliente === -1 ? [] : historialCrudo.slice(primerTurnoCliente);
 
   const contents = [
     ...historial.map((turno) => ({
@@ -130,6 +138,8 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     );
 
     if (!response.ok) {
+      const errorBody = await response.text().catch(() => "");
+      console.error(`Gemini respondió ${response.status}:`, errorBody);
       res.status(502).json({ error: "El asistente no pudo responder en este momento." });
       return;
     }
@@ -138,12 +148,14 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const respuesta = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (typeof respuesta !== "string" || !respuesta.trim()) {
+      console.error("Respuesta de Gemini sin texto utilizable:", JSON.stringify(data));
       res.status(502).json({ error: "El asistente no pudo responder en este momento." });
       return;
     }
 
     res.status(200).json({ respuesta: respuesta.trim() });
-  } catch {
+  } catch (err) {
+    console.error("Error llamando a Gemini:", err);
     res.status(502).json({ error: "El asistente no pudo responder en este momento." });
   }
 }
