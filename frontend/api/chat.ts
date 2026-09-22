@@ -14,7 +14,7 @@
  * `faqData.ts`, actualizar también `FAQ_REFERENCIA`.
  */
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.6-flash";
 const MAX_MENSAJE_LENGTH = 2000;
 const MAX_HISTORIAL = 10;
 
