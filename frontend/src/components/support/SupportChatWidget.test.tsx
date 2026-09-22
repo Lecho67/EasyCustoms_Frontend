@@ -1,55 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
 import { SupportChatWidget } from "./SupportChatWidget";
-import { fetchConsultas } from "@/lib/queryHistoryService";
 import { crearSolicitudAsesor, fetchMiSolicitudPendiente } from "@/lib/advisorRequestService";
-import type { DiagnosticoEnvio } from "@/lib/types";
+import { enviarMensajeChat } from "@/lib/chatService";
 
-vi.mock("@/lib/queryHistoryService", () => ({ fetchConsultas: vi.fn() }));
 vi.mock("@/lib/advisorRequestService", () => ({
   crearSolicitudAsesor: vi.fn(),
   fetchMiSolicitudPendiente: vi.fn(),
 }));
+vi.mock("@/lib/chatService", () => ({ enviarMensajeChat: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
-const fetchConsultasMock = vi.mocked(fetchConsultas);
 const crearSolicitudMock = vi.mocked(crearSolicitudAsesor);
 const fetchPendienteMock = vi.mocked(fetchMiSolicitudPendiente);
-
-function diag(id: string, descripcionItem: string): DiagnosticoEnvio {
-  return {
-    id,
-    nivel: "verde",
-    titulo: descripcionItem,
-    resumen: "",
-    justificacion: "",
-    fuenteNormativa: "",
-    documentosRequeridos: [],
-    accionesSugeridas: [],
-    partidaArancelariaTentativa: "Sin partida tentativa declarada",
-    desgloseImpuestos: null,
-    createdAt: "2026-01-01T00:00:00Z",
-    input: { paisDestino: "Colombia", descripcionItem },
-  };
-}
+const enviarMensajeChatMock = vi.mocked(enviarMensajeChat);
 
 function renderWidget() {
-  return render(
-    <MemoryRouter>
-      <SupportChatWidget />
-    </MemoryRouter>
-  );
+  return render(<SupportChatWidget />);
 }
 
-async function abrirYEsperarCarga(user: ReturnType<typeof userEvent.setup>) {
+async function abrir(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Abrir chat de ayuda" }));
-  await waitFor(() => expect(screen.queryByText(/Cargando tu historial/)).not.toBeInTheDocument());
 }
 
 beforeEach(() => {
-  fetchConsultasMock.mockReset().mockResolvedValue([]);
   crearSolicitudMock.mockReset().mockResolvedValue({
     id: "s1",
     user_id: "u1",
@@ -60,94 +35,90 @@ beforeEach(() => {
     atendida_at: null,
   });
   fetchPendienteMock.mockReset().mockResolvedValue(null);
+  enviarMensajeChatMock.mockReset().mockResolvedValue("Respuesta del asistente.");
 });
 
 describe("SupportChatWidget — abrir/cerrar", () => {
-  it("arranca cerrado y el botón lo abre", async () => {
+  it("arranca cerrado y el botón lo abre con el mensaje de bienvenida", async () => {
     const user = userEvent.setup();
     renderWidget();
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Abrir chat de ayuda" }));
+    await abrir(user);
 
     expect(screen.getByRole("dialog", { name: "Chat de ayuda" })).toBeInTheDocument();
-    expect(screen.getByText(/Puedo responder preguntas generales/)).toBeInTheDocument();
+    expect(screen.getByText(/soy el asistente de Easy CUSTOMS/)).toBeInTheDocument();
   });
 
   it("Escape cierra el panel", async () => {
     const user = userEvent.setup();
     renderWidget();
-    await user.click(screen.getByRole("button", { name: "Abrir chat de ayuda" }));
+    await abrir(user);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
 
     await user.keyboard("{Escape}");
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+});
 
-  it("deshabilita el input mientras carga el historial y las FAQ la primera vez", async () => {
-    let resolver: (v: DiagnosticoEnvio[]) => void = () => {};
-    fetchConsultasMock.mockReturnValue(new Promise((r) => { resolver = r; }));
+describe("SupportChatWidget — responde con Gemini", () => {
+  it("envía el mensaje y muestra la respuesta del asistente", async () => {
+    enviarMensajeChatMock.mockResolvedValue("Los envíos hasta USD 200 no pagan arancel.");
     const user = userEvent.setup();
     renderWidget();
+    await abrir(user);
 
-    await user.click(screen.getByRole("button", { name: "Abrir chat de ayuda" }));
+    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "cuanto puedo importar sin pagar");
+    await user.keyboard("{Enter}");
+
+    expect(await screen.findByText("Los envíos hasta USD 200 no pagan arancel.")).toBeInTheDocument();
+    expect(enviarMensajeChatMock).toHaveBeenCalledWith("cuanto puedo importar sin pagar", expect.any(Array));
+  });
+
+  it("deshabilita el input mientras espera la respuesta", async () => {
+    let resolver: (v: string) => void = () => {};
+    enviarMensajeChatMock.mockReturnValue(new Promise((r) => { resolver = r; }));
+    const user = userEvent.setup();
+    renderWidget();
+    await abrir(user);
+
+    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "hola");
+    await user.keyboard("{Enter}");
 
     expect(screen.getByPlaceholderText("Escribí tu pregunta...")).toBeDisabled();
-    resolver([]);
+    resolver("listo");
     await waitFor(() => expect(screen.getByPlaceholderText("Escribí tu pregunta...")).toBeEnabled());
   });
-});
 
-describe("SupportChatWidget — responde preguntas de FAQ", () => {
-  it("responde con la FAQ real que coincide", async () => {
+  it("si falla la llamada, muestra un mensaje de error y un toast", async () => {
+    enviarMensajeChatMock.mockRejectedValue(new Error("timeout"));
     const user = userEvent.setup();
     renderWidget();
-    await abrirYEsperarCarga(user);
+    await abrir(user);
 
-    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "que es el casillero");
+    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "hola");
     await user.keyboard("{Enter}");
 
-    expect(await screen.findByText("¿Qué es el casillero virtual y cómo funciona?")).toBeInTheDocument();
+    expect(await screen.findByText(/No pude responder en este momento/)).toBeInTheDocument();
   });
 });
 
-describe("SupportChatWidget — historial del cliente", () => {
-  it("responde con la consulta real del cliente que coincide", async () => {
-    fetchConsultasMock.mockResolvedValue([diag("d1", "Celular usado")]);
+describe("SupportChatWidget — solicitar asesor", () => {
+  it("el botón de solicitar asesor llama al servicio y queda pendiente", async () => {
     const user = userEvent.setup();
     renderWidget();
-    await abrirYEsperarCarga(user);
+    await abrir(user);
 
-    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "cual es el estado de mi celular");
-    await user.keyboard("{Enter}");
-
-    expect(await screen.findByText("Encontré esta consulta tuya:")).toBeInTheDocument();
-    expect(screen.getByText("Celular usado")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Celular usado/ })).toHaveAttribute("href", "/consulta/d1");
-  });
-});
-
-describe("SupportChatWidget — pedir asesor", () => {
-  it("escribir 'asesor' ofrece el botón para solicitarlo, y al confirmarlo llama al servicio", async () => {
-    const user = userEvent.setup();
-    renderWidget();
-    await abrirYEsperarCarga(user);
-
-    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "quiero un asesor");
-    await user.keyboard("{Enter}");
-
-    const boton = await screen.findByRole("button", { name: "Solicitar asesor personal" });
+    const boton = screen.getByRole("button", { name: /Solicitar asesor/ });
     await user.click(boton);
 
     await waitFor(() => expect(crearSolicitudMock).toHaveBeenCalledTimes(1));
-    expect(
-      await screen.findByText(/Ya tenés una solicitud de asesor pendiente/)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Ya tenés una solicitud de asesor pendiente/)).toBeInTheDocument();
   });
 
-  it("si ya había una solicitud pendiente al abrir el chat, no vuelve a ofrecer el botón", async () => {
+  it("si ya había una solicitud pendiente al abrir el chat, no ofrece el botón", async () => {
     fetchPendienteMock.mockResolvedValue({
       id: "s0",
       user_id: "u1",
@@ -159,28 +130,9 @@ describe("SupportChatWidget — pedir asesor", () => {
     });
     const user = userEvent.setup();
     renderWidget();
-    await abrirYEsperarCarga(user);
-
-    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "necesito un asesor");
-    await user.keyboard("{Enter}");
+    await abrir(user);
 
     expect(await screen.findByText(/Ya tenés una solicitud de asesor pendiente/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Solicitar asesor personal" })).not.toBeInTheDocument();
-  });
-
-  it("después de dos preguntas sin respuesta, ofrece proactivamente un asesor", async () => {
-    const user = userEvent.setup();
-    renderWidget();
-    await abrirYEsperarCarga(user);
-
-    const input = screen.getByPlaceholderText("Escribí tu pregunta...");
-    await user.type(input, "asdasd sin sentido uno");
-    await user.keyboard("{Enter}");
-    expect(screen.queryByRole("button", { name: "Solicitar asesor personal" })).not.toBeInTheDocument();
-
-    await user.type(input, "asdasd sin sentido dos");
-    await user.keyboard("{Enter}");
-
-    expect(await screen.findByRole("button", { name: "Solicitar asesor personal" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Solicitar asesor/ })).not.toBeInTheDocument();
   });
 });

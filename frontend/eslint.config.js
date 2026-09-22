@@ -33,5 +33,12 @@ export default tseslint.config(
         { allowShortCircuit: true, allowTernary: true },
       ],
     },
+  },
+  {
+    // Vercel Serverless Functions (Node, no DOM) — ver frontend/vercel.json.
+    files: ["api/**/*.ts"],
+    languageOptions: {
+      globals: globals.node,
+    },
   }
 );

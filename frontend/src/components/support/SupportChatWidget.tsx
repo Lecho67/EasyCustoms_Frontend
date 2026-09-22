@@ -1,154 +1,39 @@
 // src/components/support/SupportChatWidget.tsx
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
-import { VerdictBadge } from "@/components/verdict/VerdictBadge";
-import { Button } from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
-import { fetchConsultas } from "@/lib/queryHistoryService";
 import { crearSolicitudAsesor, fetchMiSolicitudPendiente } from "@/lib/advisorRequestService";
-import { responderPregunta, type RespuestaAsistente } from "@/lib/supportAssistant";
-import type { DiagnosticoEnvio } from "@/lib/types";
+import { enviarMensajeChat } from "@/lib/chatService";
 
 /**
- * Chat de ayuda flotante para clientes. A propósito NO es un chatbot de IA:
- * responde con lógica determinística (`supportAssistant.ts`) contra las FAQ
- * reales y el historial real del cliente, y ofrece escalar a un asesor
- * humano cuando no encuentra respuesta o el cliente lo pide directamente.
- * Ver docs/sql/solicitudes-asesor.sql.
+ * Chat de ayuda flotante para clientes, respondido por Gemini (Google AI
+ * Studio, tier gratuito) vía api/chat.ts. El prompt del asistente lo acota a
+ * temas de la plataforma y le prohíbe inventar cifras de aranceles o acceder
+ * al historial real del cliente; para eso, y para lo que no sepa responder,
+ * ofrece el botón "Solicitar asesor" (ver docs/sql/solicitudes-asesor.sql).
  */
-
-// Después de esta cantidad de respuestas seguidas sin resultado, el
-// asistente ofrece proactivamente un asesor (además de que el cliente
-// siempre puede pedirlo escribiendo "asesor").
-const INTENTOS_ANTES_DE_OFRECER_ASESOR = 2;
 
 function generarId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-type ContenidoAsistente = { kind: "respuesta"; respuesta: RespuestaAsistente } | { kind: "texto"; texto: string };
-
-type Mensaje =
-  | { id: string; autor: "cliente"; texto: string }
-  | { id: string; autor: "asistente"; contenido: ContenidoAsistente };
+interface Mensaje {
+  id: string;
+  autor: "cliente" | "asistente";
+  texto: string;
+}
 
 const MENSAJE_BIENVENIDA =
-  "Hola. Puedo responder preguntas generales sobre aduanas, tu casillero y tributos, y contarte sobre tus propias consultas. Si preferís hablar con una persona, escribime \"asesor\".";
-
-interface RespuestaAsistenteViewProps {
-  respuesta: RespuestaAsistente;
-  solicitudPendiente: boolean;
-  enviandoSolicitud: boolean;
-  onSolicitarAsesor: () => void;
-}
-
-function RespuestaAsistenteView({
-  respuesta,
-  solicitudPendiente,
-  enviandoSolicitud,
-  onSolicitarAsesor,
-}: RespuestaAsistenteViewProps) {
-  switch (respuesta.tipo) {
-    case "faq":
-      return (
-        <div>
-          <p className="font-medium text-slate-800">{respuesta.item.pregunta}</p>
-          <p className="mt-1 text-slate-600">{respuesta.item.respuesta}</p>
-        </div>
-      );
-
-    case "consulta":
-      return (
-        <div>
-          <p className="mb-2 text-slate-700">Encontré esta consulta tuya:</p>
-          <ConsultaMini diagnostico={respuesta.diagnostico} />
-        </div>
-      );
-
-    case "consultas":
-      return (
-        <div>
-          <p className="mb-2 text-slate-700">Encontré estas consultas tuyas:</p>
-          <ul className="space-y-2">
-            {respuesta.diagnosticos.map((d) => (
-              <li key={d.id}>
-                <ConsultaMini diagnostico={d} />
-              </li>
-            ))}
-          </ul>
-        </div>
-      );
-
-    case "sin_consulta_encontrada":
-      return (
-        <p className="text-slate-600">
-          No encontré ninguna consulta tuya con esa descripción. Podés revisar todo tu{" "}
-          <Link to="/dashboard/historial" className="font-medium text-cobalt hover:underline">
-            historial
-          </Link>
-          .
-        </p>
-      );
-
-    case "sin_resultado":
-      return (
-        <p className="text-slate-600">
-          No tengo una respuesta para eso. Podés revisar el{" "}
-          <Link to="/soporte" className="font-medium text-cobalt hover:underline">
-            Centro de Ayuda
-          </Link>{" "}
-          o pedirme que te conecte con un asesor personal.
-        </p>
-      );
-
-    case "ofrecer_asesor":
-      return solicitudPendiente ? (
-        <p className="text-slate-600">
-          Ya tenés una solicitud de asesor pendiente. Un administrador te va a contactar pronto.
-        </p>
-      ) : (
-        <div>
-          <p className="mb-2 text-slate-600">
-            Puedo dejar pedido un asesor personal para que te contacte. Un administrador revisa la
-            solicitud y te asigna uno.
-          </p>
-          <Button
-            type="button"
-            onClick={onSolicitarAsesor}
-            disabled={enviandoSolicitud}
-            className="px-4 py-2 text-sm"
-          >
-            {enviandoSolicitud ? "Enviando..." : "Solicitar asesor personal"}
-          </Button>
-        </div>
-      );
-  }
-}
-
-function ConsultaMini({ diagnostico }: { diagnostico: DiagnosticoEnvio }) {
-  return (
-    <Link
-      to={`/consulta/${diagnostico.id}`}
-      className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50"
-    >
-      <span className="min-w-0 truncate text-slate-800">{diagnostico.titulo}</span>
-      <VerdictBadge nivel={diagnostico.nivel} />
-    </Link>
-  );
-}
+  "Hola, soy el asistente de Easy CUSTOMS. Puedo ayudarte con preguntas generales sobre aduanas, tu casillero y tributos. Para el estado de tus propios envíos, revisá tu Historial; si preferís hablar con una persona, usá el botón de abajo.";
 
 export function SupportChatWidget() {
   const [abierto, setAbierto] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [entrada, setEntrada] = useState("");
-  const [cargandoDatos, setCargandoDatos] = useState(true);
-  const [misConsultas, setMisConsultas] = useState<DiagnosticoEnvio[]>([]);
+  const [enviando, setEnviando] = useState(false);
   const [solicitudPendiente, setSolicitudPendiente] = useState(false);
   const [enviandoSolicitud, setEnviandoSolicitud] = useState(false);
-  const intentosSinResultadoRef = useRef(0);
-  const avisoProactivoMostradoRef = useRef(false);
   const cargadoRef = useRef(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const mensajesFinRef = useRef<HTMLDivElement>(null);
@@ -160,16 +45,11 @@ export function SupportChatWidget() {
     if (!abierto || cargadoRef.current) return;
     cargadoRef.current = true;
 
-    setMensajes([{ id: generarId(), autor: "asistente", contenido: { kind: "texto", texto: MENSAJE_BIENVENIDA } }]);
+    setMensajes([{ id: generarId(), autor: "asistente", texto: MENSAJE_BIENVENIDA }]);
 
-    Promise.all([
-      fetchConsultas().catch(() => []),
-      fetchMiSolicitudPendiente().catch(() => null),
-    ]).then(([consultas, solicitud]) => {
-      setMisConsultas(consultas);
-      setSolicitudPendiente(solicitud !== null);
-      setCargandoDatos(false);
-    });
+    fetchMiSolicitudPendiente()
+      .then((solicitud) => setSolicitudPendiente(solicitud !== null))
+      .catch(() => {});
   }, [abierto]);
 
   useEffect(() => {
@@ -186,34 +66,31 @@ export function SupportChatWidget() {
     mensajesFinRef.current?.scrollIntoView?.({ behavior: "smooth" });
   }, [mensajes]);
 
-  function agregarMensajeAsistente(respuesta: RespuestaAsistente) {
-    setMensajes((prev) => [...prev, { id: generarId(), autor: "asistente", contenido: { kind: "respuesta", respuesta } }]);
-  }
-
-  function handleEnviar(e: FormEvent) {
+  async function handleEnviar(e: FormEvent) {
     e.preventDefault();
     const texto = entrada.trim();
-    if (!texto || cargandoDatos) return;
+    if (!texto || enviando) return;
 
+    const historialParaApi = mensajes.map((m) => ({ autor: m.autor, texto: m.texto }));
     setEntrada("");
     setMensajes((prev) => [...prev, { id: generarId(), autor: "cliente", texto }]);
+    setEnviando(true);
 
-    const respuesta = responderPregunta(texto, misConsultas);
-    agregarMensajeAsistente(respuesta);
-
-    const sinResultado = respuesta.tipo === "sin_resultado" || respuesta.tipo === "sin_consulta_encontrada";
-    if (sinResultado) {
-      intentosSinResultadoRef.current += 1;
-      if (
-        intentosSinResultadoRef.current >= INTENTOS_ANTES_DE_OFRECER_ASESOR &&
-        !avisoProactivoMostradoRef.current
-      ) {
-        avisoProactivoMostradoRef.current = true;
-        agregarMensajeAsistente({ tipo: "ofrecer_asesor" });
-      }
-    } else {
-      intentosSinResultadoRef.current = 0;
-      avisoProactivoMostradoRef.current = false;
+    try {
+      const respuesta = await enviarMensajeChat(texto, historialParaApi);
+      setMensajes((prev) => [...prev, { id: generarId(), autor: "asistente", texto: respuesta }]);
+    } catch (err) {
+      setMensajes((prev) => [
+        ...prev,
+        {
+          id: generarId(),
+          autor: "asistente",
+          texto: "No pude responder en este momento. Probá de nuevo en un momento o solicitá un asesor.",
+        },
+      ]);
+      toast.error("No se pudo enviar tu mensaje", err instanceof Error ? err.message : undefined);
+    } finally {
+      setEnviando(false);
     }
   }
 
@@ -271,28 +148,34 @@ export function SupportChatWidget() {
                 </div>
               ) : (
                 <div key={m.id} className="flex justify-start">
-                  <div className="max-w-[90%] rounded-xl rounded-bl-sm bg-slate-100 px-3 py-2">
-                    {m.contenido.kind === "texto" ? (
-                      <p className="text-slate-700">{m.contenido.texto}</p>
-                    ) : (
-                      <RespuestaAsistenteView
-                        respuesta={m.contenido.respuesta}
-                        solicitudPendiente={solicitudPendiente}
-                        enviandoSolicitud={enviandoSolicitud}
-                        onSolicitarAsesor={handleSolicitarAsesor}
-                      />
-                    )}
-                  </div>
+                  <p className="max-w-[90%] whitespace-pre-wrap rounded-xl rounded-bl-sm bg-slate-100 px-3 py-2 text-slate-700">
+                    {m.texto}
+                  </p>
                 </div>
               )
             )}
-            {cargandoDatos && (
+            {enviando && (
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Cargando tu historial...
+                Escribiendo...
               </div>
             )}
             <div ref={mensajesFinRef} />
+          </div>
+
+          <div className="border-t border-slate-100 px-4 py-2 text-xs">
+            {solicitudPendiente ? (
+              <span className="text-slate-500">Ya tenés una solicitud de asesor pendiente.</span>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSolicitarAsesor}
+                disabled={enviandoSolicitud}
+                className="font-medium text-cobalt hover:underline disabled:text-slate-400"
+              >
+                {enviandoSolicitud ? "Enviando solicitud..." : "¿Preferís hablar con una persona? Solicitar asesor"}
+              </button>
+            )}
           </div>
 
           <form onSubmit={handleEnviar} className="flex items-center gap-2 border-t border-slate-100 p-3">
@@ -304,13 +187,13 @@ export function SupportChatWidget() {
               type="text"
               value={entrada}
               onChange={(e) => setEntrada(e.target.value)}
-              disabled={cargandoDatos}
+              disabled={enviando}
               placeholder="Escribí tu pregunta..."
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent disabled:bg-slate-50"
             />
             <button
               type="submit"
-              disabled={cargandoDatos || !entrada.trim()}
+              disabled={enviando || !entrada.trim()}
               aria-label="Enviar"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cobalt text-white transition-colors hover:bg-cobalt-600 disabled:bg-slate-200 disabled:text-slate-400"
             >
