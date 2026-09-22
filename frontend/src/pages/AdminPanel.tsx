@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { MetricsOverview } from "@/components/admin/MetricsOverview";
 import { AdminUserTable } from "@/components/admin/AdminUserTable";
+import { AdvisorRequestsPanel } from "@/components/admin/AdvisorRequestsPanel";
 
 export function AdminPanel() {
   const { profile } = useAuth();
@@ -13,6 +14,15 @@ export function AdminPanel() {
       </p>
 
       <MetricsOverview />
+
+      <h2 className="text-lg font-semibold text-slate-800 mb-1">Solicitudes de asesor</h2>
+      <p className="text-sm text-slate-500 mb-3">
+        Pedidos de asesor personal desde el chat de ayuda. Asigná el gestor desde la tabla de
+        Usuarios y marcá la solicitud como atendida.
+      </p>
+      <div className="mb-8">
+        <AdvisorRequestsPanel />
+      </div>
 
       <h2 className="text-lg font-semibold text-slate-800 mb-3">Usuarios</h2>
       <AdminUserTable />

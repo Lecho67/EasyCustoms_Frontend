@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RequireCompliance } from "@/components/RequireCompliance";
 import { Navbar } from "@/components/layout/Navbar";
@@ -8,6 +9,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { SessionKickedModal } from "@/components/SessionKickedModal";
+import { SupportChatWidget } from "@/components/support/SupportChatWidget";
 // Pitch es la home ("/" y "/pitch"): se carga eager para que la primera visita
 // no vea un spinner. El resto de las vistas van por ruta con React.lazy.
 import { Pitch } from "@/pages/Pitch";
@@ -38,6 +40,7 @@ const Reports = lazy(() => import("@/pages/Reports").then((m) => ({ default: m.R
 const NotFound = lazy(() => import("@/pages/NotFound").then((m) => ({ default: m.NotFound })));
 
 function Layout({ children }: { children: React.ReactNode }) {
+  const { profile } = useAuth();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -46,6 +49,9 @@ function Layout({ children }: { children: React.ReactNode }) {
       <ToastContainer />
       <SessionKickedModal />
       <CookieConsentBanner />
+      {/* Solo clientes: "pedir un asesor personal" y "mis consultas" son
+          conceptos de esa relación cliente-asesor, no aplican a roles internos. */}
+      {profile?.role === "cliente" && <SupportChatWidget />}
     </div>
   );
 }

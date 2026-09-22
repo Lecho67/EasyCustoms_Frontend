@@ -77,6 +77,16 @@ export interface DocumentRecord {
   assigned_agent_id: string | null;
 }
 
+export interface SolicitudAsesor {
+  id: string;
+  user_id: string;
+  mensaje: string | null;
+  estado: 'pendiente' | 'atendida';
+  created_at: string;
+  atendida_por: string | null;
+  atendida_at: string | null;
+}
+
 export type NotificationType = 'paquete_recibido' | 'aprobado_aduana' | 'impuesto_pendiente';
 
 export interface NotificationRecord {

@@ -19,6 +19,7 @@ export function createQueryBuilderMock(result: { data: unknown; error: unknown }
     insert: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
     single: ReturnType<typeof vi.fn>;
+    maybeSingle: ReturnType<typeof vi.fn>;
     then: (
       resolve: (value: typeof result) => unknown,
       reject?: (reason: unknown) => unknown
@@ -34,6 +35,7 @@ export function createQueryBuilderMock(result: { data: unknown; error: unknown }
     insert: vi.fn(() => builder),
     delete: vi.fn(() => builder),
     single: vi.fn(() => Promise.resolve(result)),
+    maybeSingle: vi.fn(() => Promise.resolve(result)),
     then: (resolve, reject) => Promise.resolve(result).then(resolve, reject),
   };
   return builder;
