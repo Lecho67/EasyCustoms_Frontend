@@ -2,6 +2,7 @@
 import React, {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   ReactNode,
@@ -164,16 +165,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [userId]);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName ?? '' } },
     });
     if (error) throw error;
-  };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     registrandoSesionRef.current = true;
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -182,45 +183,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       registrandoSesionRef.current = false;
     }
-  };
+  }, []);
 
   // Redirige a Google y vuelve a /dashboard; la sesión la recoge
   // automáticamente el listener de arriba (detectSessionInUrl en supabase.ts).
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/dashboard` },
     });
     if (error) throw error;
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-  };
+  }, []);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) await fetchProfile(user.id);
-  };
+  }, [user, fetchProfile]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        profile,
-        loading,
-        profileError,
-        sesionDesplazada,
-        descartarAvisoSesion: () => setSesionDesplazada(false),
-        signUp,
-        signIn,
-        signInWithGoogle,
-        signOut,
-        refreshProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const descartarAvisoSesion = useCallback(() => setSesionDesplazada(false), []);
+
+  // Memoizado: sin esto, cada render de AuthProvider crea un objeto y 6
+  // funciones nuevas, lo que invalida cualquier useEffect/useMemo corriente
+  // abajo que dependa de ellas (19 componentes consumen useAuth()). No
+  // reduce cuántas veces cambia la referencia del value en sí — eso sigue
+  // atado a que cambie alguno de los 6 useState de arriba — pero sí
+  // garantiza que las funciones sean estables entre renders.
+  const value = useMemo(
+    () => ({
+      user,
+      session,
+      profile,
+      loading,
+      profileError,
+      sesionDesplazada,
+      descartarAvisoSesion,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      signOut,
+      refreshProfile,
+    }),
+    [
+      user,
+      session,
+      profile,
+      loading,
+      profileError,
+      sesionDesplazada,
+      descartarAvisoSesion,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      signOut,
+      refreshProfile,
+    ]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
