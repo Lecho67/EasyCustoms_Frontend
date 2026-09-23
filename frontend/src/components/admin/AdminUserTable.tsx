@@ -6,6 +6,7 @@ import { toast } from "@/lib/toast";
 import { Pagination } from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { useAsyncData } from "@/hooks/useAsyncData";
+import { Modal } from "@/components/ui/Modal";
 
 const ROLES: UserRole[] = ["cliente", "gestor", "agente", "admin"];
 
@@ -291,10 +292,12 @@ export function AdminUserTable() {
         </>
       )}
 
-      {/* Modal de confirmación */}
-      {accionPendiente && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow">
+      {/* Modal de confirmación — antes era un <div> a mano sin role="dialog",
+          sin focus trap y sin cierre con Escape. Reusa el Modal compartido
+          (ya tiene las tres cosas vía useFocusTrap). */}
+      <Modal open={!!accionPendiente} onClose={() => setAccionPendiente(null)}>
+        {accionPendiente && (
+          <>
             <h2 className="mb-3 text-lg font-semibold text-slate-900">Confirmar cambio</h2>
 
             {accionPendiente.tipo === "rol" ? (
@@ -332,9 +335,9 @@ export function AdminUserTable() {
                 {guardandoId ? "Aplicando..." : "Confirmar"}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

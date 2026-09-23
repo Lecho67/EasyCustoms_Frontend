@@ -29,15 +29,16 @@ async function elegirSelect(
   opcion: string
 ) {
   await user.click(screen.getAllByRole("button", { name: triggerActual })[0]);
-  await user.click(screen.getByRole("button", { name: opcion }));
+  // Select.tsx: las opciones tienen role="option" (listbox), no "button".
+  await user.click(screen.getByRole("option", { name: opcion }));
 }
 
 /** Completa los pasos 1 a 3 con datos válidos (sin declaraciones especiales)
  * y deja el wizard parado en el paso 4. */
 async function completarLogisticaYProducto(user: ReturnType<typeof userEvent.setup>) {
-  await elegirSelect(user, "Selecciona un país", "Estados Unidos");
-  await elegirSelect(user, "Selecciona una opción", "Aéreo");
-  await elegirSelect(user, "Selecciona una opción", "Envío personal / regalo");
+  await elegirSelect(user, "País de origen", "Estados Unidos");
+  await elegirSelect(user, "Tipo de transporte", "Aéreo");
+  await elegirSelect(user, "Modalidad de envío", "Envío personal / regalo");
   await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
   await user.type(
@@ -65,6 +66,24 @@ describe("ShipmentForm — navegación por pasos", () => {
     expect(screen.queryByRole("button", { name: "Anterior" })).not.toBeInTheDocument();
   });
 
+  it("el título del paso recibe el foco al montar y en cada cambio de paso", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    expect(screen.getByRole("heading", { name: "Logística" })).toHaveFocus();
+
+    await elegirSelect(user, "País de origen", "Estados Unidos");
+    await elegirSelect(user, "Tipo de transporte", "Aéreo");
+    await elegirSelect(user, "Modalidad de envío", "Envío personal / regalo");
+    await user.click(screen.getByRole("button", { name: "Siguiente" }));
+
+    expect(screen.getByRole("heading", { name: "Destino y producto" })).toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: "Anterior" }));
+
+    expect(screen.getByRole("heading", { name: "Logística" })).toHaveFocus();
+  });
+
   it("bloquea 'Siguiente' en el paso 1 y muestra los errores del paso", async () => {
     const user = userEvent.setup();
     const { onSubmit } = setup();
@@ -82,9 +101,9 @@ describe("ShipmentForm — navegación por pasos", () => {
     const user = userEvent.setup();
     setup();
 
-    await elegirSelect(user, "Selecciona un país", "Estados Unidos");
-    await elegirSelect(user, "Selecciona una opción", "Aéreo");
-    await elegirSelect(user, "Selecciona una opción", "Envío personal / regalo");
+    await elegirSelect(user, "País de origen", "Estados Unidos");
+    await elegirSelect(user, "Tipo de transporte", "Aéreo");
+    await elegirSelect(user, "Modalidad de envío", "Envío personal / regalo");
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
     expect(screen.getByText("Paso 2 de 5")).toBeInTheDocument();
@@ -110,9 +129,9 @@ describe("ShipmentForm — navegación por pasos", () => {
     const user = userEvent.setup();
     setup();
 
-    await elegirSelect(user, "Selecciona un país", "Estados Unidos");
-    await elegirSelect(user, "Selecciona una opción", "Aéreo");
-    await elegirSelect(user, "Selecciona una opción", "Envío personal / regalo");
+    await elegirSelect(user, "País de origen", "Estados Unidos");
+    await elegirSelect(user, "Tipo de transporte", "Aéreo");
+    await elegirSelect(user, "Modalidad de envío", "Envío personal / regalo");
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
     await user.click(screen.getByRole("button", { name: "Electrónica" }));
@@ -158,9 +177,9 @@ describe("ShipmentForm — paso 2 (destino y producto)", () => {
     const user = userEvent.setup();
     setup();
 
-    await elegirSelect(user, "Selecciona un país", "Estados Unidos");
-    await elegirSelect(user, "Selecciona una opción", "Aéreo");
-    await elegirSelect(user, "Selecciona una opción", "Envío personal / regalo");
+    await elegirSelect(user, "País de origen", "Estados Unidos");
+    await elegirSelect(user, "Tipo de transporte", "Aéreo");
+    await elegirSelect(user, "Modalidad de envío", "Envío personal / regalo");
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
     await user.click(screen.getByRole("button", { name: "Electrónica" }));
@@ -193,7 +212,7 @@ describe("ShipmentForm — declaraciones especiales por paso", () => {
     expect(screen.getByText("Paso 4 de 5")).toBeInTheDocument();
     expect(screen.getByText("Selecciona el tipo de batería.")).toBeInTheDocument();
 
-    await elegirSelect(user, "Selecciona un tipo", "Litio-ion");
+    await elegirSelect(user, "Tipo de batería", "Litio-ion");
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
     expect(screen.getByText("Paso 5 de 5")).toBeInTheDocument();
   });
@@ -250,9 +269,9 @@ describe("ShipmentForm — paso 5 (otras mercancías peligrosas)", () => {
 });
 
 async function llegarAPaso2(user: ReturnType<typeof userEvent.setup>) {
-  await elegirSelect(user, "Selecciona un país", "Estados Unidos");
-  await elegirSelect(user, "Selecciona una opción", "Aéreo");
-  await elegirSelect(user, "Selecciona una opción", "Envío personal / regalo");
+  await elegirSelect(user, "País de origen", "Estados Unidos");
+  await elegirSelect(user, "Tipo de transporte", "Aéreo");
+  await elegirSelect(user, "Modalidad de envío", "Envío personal / regalo");
   await user.click(screen.getByRole("button", { name: "Siguiente" }));
 }
 

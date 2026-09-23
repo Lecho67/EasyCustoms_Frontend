@@ -90,6 +90,23 @@ describe("AdminUserTable", () => {
     expect(screen.getByText(/control total del sistema/i)).toBeInTheDocument();
   });
 
+  it("el modal de confirmación es accesible: role=dialog, Escape lo cierra y el foco vuelve al select que lo abrió", async () => {
+    const user = userEvent.setup();
+    render(<AdminUserTable />);
+    await screen.findByRole("table");
+
+    const [selectRol] = tabla().getAllByRole("combobox");
+    await user.selectOptions(selectRol, "agente");
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(actualizarRolMock).not.toHaveBeenCalled();
+    expect(selectRol).toHaveFocus();
+  });
+
   it("'Cancelar' cierra el modal sin llamar al servicio", async () => {
     const user = userEvent.setup();
     render(<AdminUserTable />);

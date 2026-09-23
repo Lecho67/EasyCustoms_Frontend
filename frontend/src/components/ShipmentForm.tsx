@@ -20,7 +20,7 @@
 // Paso 1 "Logística" más abajo), y se validan/mapean 1:1 en
 // shipmentMapping.ts (ya no hay constantes hardcodeadas ahí).
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -120,11 +120,13 @@ function EnumSelect<T extends string>({
   onChange,
   options,
   placeholder,
+  ariaLabel,
 }: {
   value: T | undefined;
   onChange: (value: T) => void;
   options: { value: T; label: string }[];
   placeholder?: string;
+  ariaLabel?: string;
 }) {
   const currentLabel = options.find((o) => o.value === value)?.label ?? "";
   return (
@@ -136,6 +138,7 @@ function EnumSelect<T extends string>({
         if (found) onChange(found.value);
       }}
       placeholder={placeholder}
+      ariaLabel={ariaLabel}
     />
   );
 }
@@ -213,13 +216,24 @@ const validate = validateWizardFormData;
  * UI helpers
  * ==========================================================================*/
 
-const SectionCard: React.FC<{ title: string; description?: string; children: React.ReactNode }> = ({
-  title,
-  description,
-  children,
-}) => (
+const SectionCard: React.FC<{
+  title: string;
+  description?: string;
+  headingRef?: React.Ref<HTMLHeadingElement>;
+  children: React.ReactNode;
+}> = ({ title, description, headingRef, children }) => (
   <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 mb-6">
-    <h3 className="text-base font-semibold text-slate-800">{title}</h3>
+    {/* h2 (antes h3, saltaba un nivel — la página no tenía h1 propio,
+        ahora sí vía NewQuery.tsx). tabIndex=-1: no entra en el orden de
+        Tab normal, solo recibe foco programático al cambiar de paso (ver
+        el useEffect por `step` más abajo). */}
+    <h2
+      ref={headingRef}
+      tabIndex={-1}
+      className="text-base font-semibold text-slate-800 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+    >
+      {title}
+    </h2>
     {description && <p className="text-sm text-slate-500 mt-0.5 mb-4">{description}</p>}
     <div className="space-y-4 mt-4">{children}</div>
   </div>
@@ -324,6 +338,14 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
   const [errors, setErrors] = useState<FormErrors>({});
   const [step, setStep] = useState(1);
   const [hsSuggestion, setHsSuggestion] = useState<HsSuggestionState>({ status: "idle" });
+
+  // Mueve el foco al título del paso en cada cambio (incluido el montaje
+  // inicial) — sin esto, el foco se quedaba en el botón "Siguiente"/
+  // "Anterior" y nada anunciaba que el contenido de la pantalla cambió.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [step]);
 
   // Descripción con la que ya se pidió (o se está pidiendo) una sugerencia —
   // evita relanzar la petición al ir y volver del Paso 2 sin haber
@@ -447,7 +469,7 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
       <StepProgress step={step} />
 
       {step === 1 && (
-        <SectionCard title={meta.title} description={meta.description}>
+        <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-slate-500 mb-1 block">
@@ -458,8 +480,13 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 value={form.paisOrigen}
                 onChange={(paisOrigen) => update({ paisOrigen })}
                 placeholder="Selecciona un país"
+                ariaLabel="País de origen"
               />
-              {errors.paisOrigen && <p className="text-xs text-red-600 mt-1">{errors.paisOrigen}</p>}
+              {errors.paisOrigen && (
+                <p role="alert" className="text-xs text-red-600 mt-1">
+                  {errors.paisOrigen}
+                </p>
+              )}
             </div>
 
             <div>
@@ -471,9 +498,12 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 onChange={(transportType) => update({ transportType })}
                 options={TRANSPORT_TYPE_OPTIONS}
                 placeholder="Selecciona una opción"
+                ariaLabel="Tipo de transporte"
               />
               {errors.transportType && (
-                <p className="text-xs text-red-600 mt-1">{errors.transportType}</p>
+                <p role="alert" className="text-xs text-red-600 mt-1">
+                  {errors.transportType}
+                </p>
               )}
             </div>
 
@@ -486,6 +516,7 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 onChange={(shipmentModality) => update({ shipmentModality })}
                 options={SHIPMENT_MODALITY_OPTIONS}
                 placeholder="Selecciona una opción"
+                ariaLabel="Modalidad de envío"
               />
               {errors.shipmentModality && (
                 <p className="text-xs text-red-600 mt-1">{errors.shipmentModality}</p>
@@ -496,18 +527,17 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
       )}
 
       {step === 2 && (
-        <SectionCard title={meta.title} description={meta.description}>
+        <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">País de destino</label>
-            <Input value="Colombia" disabled />
+            <Input label="País de destino" value="Colombia" disabled />
             <p className="text-xs text-slate-400 mt-1">
               Por ahora Easy CUSTOMS solo evalúa importaciones hacia Colombia.
             </p>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">Categoría</label>
             <Input
+              label="Categoría"
               value={form.categoria ?? ""}
               onChange={(e) => update({ categoria: e.target.value })}
               placeholder="Ej. Electrónica"
@@ -531,10 +561,8 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">
-              Descripción del producto <span className="text-red-500">*</span>
-            </label>
             <Textarea
+              label="Descripción del producto *"
               rows={3}
               maxLength={1000}
               value={form.descripcionItem}
@@ -547,7 +575,7 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
       )}
 
       {step === 3 && (
-        <SectionCard title={meta.title} description={meta.description}>
+        <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Peso (kg) *"
@@ -621,7 +649,7 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
       )}
 
       {step === 4 && (
-        <SectionCard title={meta.title} description={meta.description}>
+        <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
           <DeclarationBlock
             title="¿Tu envío contiene baterías de litio?"
             hint="Incluye power banks, equipos con batería recargable integrada y baterías sueltas."
@@ -638,9 +666,12 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                   onChange={(tipo) => updateDecl({ bateria: { ...decl.bateria, tipo } })}
                   options={BATTERY_TYPE_OPTIONS}
                   placeholder="Selecciona un tipo"
+                  ariaLabel="Tipo de batería"
                 />
                 {errors.bateriaTipo && (
-                  <p className="text-xs text-red-600 mt-1">{errors.bateriaTipo}</p>
+                  <p role="alert" className="text-xs text-red-600 mt-1">
+                    {errors.bateriaTipo}
+                  </p>
                 )}
               </div>
               <Input
@@ -704,9 +735,12 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                   onChange={(categoria) => updateDecl({ liquido: { ...decl.liquido, categoria } })}
                   options={LIQUID_CATEGORY_OPTIONS}
                   placeholder="Selecciona una categoría"
+                  ariaLabel="Categoría del líquido"
                 />
                 {errors.liquidoCategoria && (
-                  <p className="text-xs text-red-600 mt-1">{errors.liquidoCategoria}</p>
+                  <p role="alert" className="text-xs text-red-600 mt-1">
+                    {errors.liquidoCategoria}
+                  </p>
                 )}
               </div>
               <Input
@@ -753,9 +787,12 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                   onChange={(tipo) => updateDecl({ organico: { ...decl.organico, tipo } })}
                   options={ORGANIC_TYPE_OPTIONS}
                   placeholder="Selecciona un tipo"
+                  ariaLabel="Tipo de producto"
                 />
                 {errors.organicoTipo && (
-                  <p className="text-xs text-red-600 mt-1">{errors.organicoTipo}</p>
+                  <p role="alert" className="text-xs text-red-600 mt-1">
+                    {errors.organicoTipo}
+                  </p>
                 )}
               </div>
               <div className="flex flex-col gap-2 justify-center">
@@ -800,9 +837,12 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                   onChange={(tipo) => updateDecl({ medico: { ...decl.medico, tipo } })}
                   options={MEDICAL_TYPE_OPTIONS}
                   placeholder="Selecciona un tipo"
+                  ariaLabel="Tipo de regulación"
                 />
                 {errors.medicoTipo && (
-                  <p className="text-xs text-red-600 mt-1">{errors.medicoTipo}</p>
+                  <p role="alert" className="text-xs text-red-600 mt-1">
+                    {errors.medicoTipo}
+                  </p>
                 )}
               </div>
               <div className="flex items-center">
@@ -822,7 +862,7 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
       )}
 
       {step === 5 && (
-        <SectionCard title={meta.title} description={meta.description}>
+        <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {OTHER_DANGEROUS_GOODS_OPTIONS.map((opt) => (
               <Checkbox

@@ -34,6 +34,7 @@ export function NotificationBell() {
   const [notificaciones, setNotificaciones] = useState<NotificationRecord[]>([]);
   const [abierto, setAbierto] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
@@ -78,7 +79,10 @@ export function NotificationBell() {
       }
     }
     function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setAbierto(false);
+      if (e.key === "Escape") {
+        setAbierto(false);
+        triggerRef.current?.focus();
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
@@ -112,8 +116,11 @@ export function NotificationBell() {
   return (
     <div className="relative" ref={panelRef}>
       <button
+        ref={triggerRef}
         onClick={() => setAbierto((v) => !v)}
         aria-label={`Notificaciones${noLeidas > 0 ? ` (${noLeidas} sin leer)` : ""}`}
+        aria-expanded={abierto}
+        aria-controls="notificaciones-panel"
         className="relative flex items-center text-slate-600 hover:text-slate-900 transition-colors"
       >
         <Bell className="h-5 w-5" />
@@ -125,7 +132,12 @@ export function NotificationBell() {
       </button>
 
       {abierto && (
-        <div className="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white shadow">
+        <div
+          id="notificaciones-panel"
+          role="region"
+          aria-label="Notificaciones"
+          className="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white shadow"
+        >
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
             <span className="text-sm font-semibold text-slate-900">Notificaciones</span>
             {noLeidas > 0 && (

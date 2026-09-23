@@ -119,4 +119,39 @@ describe("NotificationBell", () => {
 
     expect(screen.getByText("No tenés notificaciones.")).toBeInTheDocument();
   });
+
+  it("el trigger expone aria-expanded y el panel tiene role=region", async () => {
+    conUsuario();
+    fetchMock.mockResolvedValue([]);
+    const user = userEvent.setup();
+
+    render(<NotificationBell />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const trigger = screen.getByRole("button", { name: /notificaciones/i });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(trigger);
+
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("region", { name: "Notificaciones" })).toBeInTheDocument();
+  });
+
+  it("Escape cierra el panel y devuelve el foco al trigger", async () => {
+    conUsuario();
+    fetchMock.mockResolvedValue([noti()]);
+    const user = userEvent.setup();
+
+    render(<NotificationBell />);
+    await screen.findByText("1");
+
+    const trigger = screen.getByRole("button", { name: /notificaciones/i });
+    await user.click(trigger);
+    expect(screen.getByRole("region", { name: "Notificaciones" })).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("region", { name: "Notificaciones" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
 });

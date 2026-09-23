@@ -176,6 +176,7 @@ export default function Locker() {
                       }}
                       className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-50 hover:text-cobalt"
                       title="Editar"
+                      aria-label={`Editar pre-alerta de ${p.carrier} — ${p.tracking_number}`}
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
@@ -183,6 +184,7 @@ export default function Locker() {
                       onClick={() => solicitarEliminar(p)}
                       className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600"
                       title="Eliminar"
+                      aria-label={`Eliminar pre-alerta de ${p.carrier} — ${p.tracking_number}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

@@ -25,10 +25,14 @@ export default {
           tint: "#E8F9FA",
         },
 
-        // Veredictos: exclusivos para estados de diagnóstico, sin cambios.
-        "verdict-green": { bg: "#ECFDF5", text: "#059669", border: "#059669" },
-        "verdict-amber": { bg: "#FFFBEB", text: "#D97706", border: "#D97706" },
-        "verdict-red": { bg: "#FEF2F2", text: "#DC2626", border: "#DC2626" },
+        // Veredictos: exclusivos para estados de diagnóstico.
+        // `text` auditado a WCAG AA (4.5:1) el 2026-09-23: los tonos
+        // originales (emerald/amber/red-600) daban 3.07-4.41:1 sobre bg y
+        // blanco — fallaban para texto normal. Se bajó un escalón (-700) en
+        // los 3; `border`/`bg` quedan igual, no estaban en la auditoría.
+        "verdict-green": { bg: "#ECFDF5", text: "#047857", border: "#059669" },
+        "verdict-amber": { bg: "#FFFBEB", text: "#B45309", border: "#D97706" },
+        "verdict-red": { bg: "#FEF2F2", text: "#B91C1C", border: "#DC2626" },
       },
       fontFamily: {
         sans: ["Jost", "Century Gothic", "system-ui", "sans-serif"],

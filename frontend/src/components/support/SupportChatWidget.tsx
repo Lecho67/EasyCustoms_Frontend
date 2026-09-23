@@ -116,7 +116,9 @@ export function SupportChatWidget() {
         type="button"
         onClick={() => setAbierto((v) => !v)}
         aria-label={abierto ? "Cerrar chat de ayuda" : "Abrir chat de ayuda"}
-        className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-cobalt text-white shadow-lg transition-colors hover:bg-cobalt-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cian focus-visible:ring-offset-2"
+        // ring-cobalt, no ring-cian: cian da 2.70:1 contra el fondo de la
+        // página, bajo el 3:1 mínimo para foco (WCAG 1.4.11/2.4.11).
+        className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-cobalt text-white shadow-lg transition-colors hover:bg-cobalt-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:ring-offset-2"
       >
         {abierto ? <X className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
       </button>

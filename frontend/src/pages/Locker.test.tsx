@@ -80,6 +80,16 @@ describe("Locker — modo lectura por KYC", () => {
     expect(screen.getByTitle("Editar")).toBeInTheDocument();
     expect(screen.getByTitle("Eliminar")).toBeInTheDocument();
   });
+
+  it("los botones de editar/eliminar tienen un nombre accesible por pre-alerta, no solo el title", async () => {
+    setProfile({ kyc_status: "aprobado" });
+    fetchMock.mockResolvedValue([preAlert()]);
+    render(<Locker />);
+
+    await screen.findByText("DHL — TRK1");
+    expect(screen.getByRole("button", { name: "Editar pre-alerta de DHL — TRK1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Eliminar pre-alerta de DHL — TRK1" })).toBeInTheDocument();
+  });
 });
 
 describe("Locker — lista de pre-alertas", () => {

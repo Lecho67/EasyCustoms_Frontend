@@ -41,7 +41,10 @@ export function VerdictCard({ diagnostico }: { diagnostico: DiagnosticoEnvio }) 
           <Icon className="w-5 h-5 text-white" />
         </div>
         <div>
-          <p className={`text-2xl font-semibold ${text} mb-1`}>{diagnostico.titulo}</p>
+          {/* Era un <p>: la página del veredicto no tenía ningún heading —
+              un lector de pantalla navegando por encabezados no encontraba
+              nada acá. */}
+          <h1 className={`text-2xl font-semibold ${text} mb-1`}>{diagnostico.titulo}</h1>
           <p className={`text-sm ${text} opacity-80`}>{diagnostico.resumen}</p>
           <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/60 text-xs text-slate-600 font-mono-data">
             <Package className="w-3.5 h-3.5" />

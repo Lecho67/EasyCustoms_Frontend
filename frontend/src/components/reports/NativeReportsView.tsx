@@ -85,17 +85,41 @@ export function NativeReportsView() {
       </div>
 
       <div className="h-64 rounded-xl border border-slate-200 p-3 sm:h-80 sm:p-4">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={datos}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="mesLabel" tick={{ fontSize: 12 }} />
-            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="aprobados" name="Aprobados" fill="#059669" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="retenidos" name="Retenidos" fill="#d97706" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        {/* El SVG de Recharts no expone los datos a lectores de pantalla de
+            forma fiable — se oculta y se reemplaza por la tabla sr-only de
+            abajo, que sí es su equivalente textual (WCAG 1.1.1). */}
+        <div aria-hidden="true" className="h-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={datos}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="mesLabel" tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="aprobados" name="Aprobados" fill="#059669" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="retenidos" name="Retenidos" fill="#d97706" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <table className="sr-only">
+          <caption>Volumen mensual de envíos: aprobados vs. retenidos, últimos 6 meses</caption>
+          <thead>
+            <tr>
+              <th scope="col">Mes</th>
+              <th scope="col">Aprobados</th>
+              <th scope="col">Retenidos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {datos.map((d) => (
+              <tr key={d.mes}>
+                <th scope="row">{d.mesLabel}</th>
+                <td>{d.aprobados}</td>
+                <td>{d.retenidos}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

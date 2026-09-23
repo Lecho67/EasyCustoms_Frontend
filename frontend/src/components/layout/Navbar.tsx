@@ -62,6 +62,8 @@ export function Navbar() {
   const menuRef = useRef<HTMLDivElement>(null);
   const panelesRef = useRef<HTMLDivElement>(null);
   const mobileDrawerRef = useRef<HTMLDivElement>(null);
+  const panelesButtonRef = useRef<HTMLButtonElement>(null);
+  const perfilButtonRef = useRef<HTMLButtonElement>(null);
   useFocusTrap(mobileDrawerRef, isMobileMenuOpen);
 
   useEffect(() => {
@@ -73,6 +75,25 @@ export function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Escape cierra el desplegable abierto y devuelve el foco al botón que lo
+  // abrió — antes solo se podía cerrar con click afuera o eligiendo un enlace.
+  useEffect(() => {
+    if (!isPanelesOpen && !isOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (isPanelesOpen) {
+        setIsPanelesOpen(false);
+        panelesButtonRef.current?.focus();
+      }
+      if (isOpen) {
+        setIsOpen(false);
+        perfilButtonRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isPanelesOpen, isOpen]);
 
   // Evita el scroll del body mientras el drawer móvil está abierto
   useEffect(() => {
@@ -169,10 +190,13 @@ export function Navbar() {
               </Link>
               <div className="relative hidden lg:block" ref={panelesRef}>
                 <button
+                  ref={panelesButtonRef}
                   onClick={() => {
                     setIsPanelesOpen((prev) => !prev);
                     setIsOpen(false);
                   }}
+                  aria-expanded={isPanelesOpen}
+                  aria-controls="navbar-paneles-menu"
                   className="flex items-center gap-1.5 text-slate-500 hover:text-slate-900 transition-colors"
                 >
                   Paneles
@@ -182,7 +206,10 @@ export function Navbar() {
                 </button>
 
                 {isPanelesOpen && (
-                  <div className="absolute left-0 mt-2 w-60 shadow rounded-xl bg-white border border-slate-100 py-2 text-sm z-20">
+                  <div
+                    id="navbar-paneles-menu"
+                    className="absolute left-0 mt-2 w-60 shadow rounded-xl bg-white border border-slate-100 py-2 text-sm z-20"
+                  >
                     {PANELES_ADMIN.map((grupo, i) => (
                       <div key={grupo.titulo}>
                         {i > 0 && <div className="my-2 border-t border-slate-100" />}
@@ -218,10 +245,13 @@ export function Navbar() {
           {user ? (
             <div className="relative hidden lg:block" ref={menuRef}>
               <button
+                ref={perfilButtonRef}
                 onClick={() => {
                   setIsOpen((prev) => !prev);
                   setIsPanelesOpen(false);
                 }}
+                aria-expanded={isOpen}
+                aria-controls="navbar-perfil-menu"
                 className="flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition-colors font-medium"
               >
                 <User className="w-4 h-4 shrink-0" />
@@ -232,7 +262,10 @@ export function Navbar() {
               </button>
 
               {isOpen && (
-                <div className="absolute right-0 mt-2 w-64 shadow rounded-xl bg-white border border-slate-100 py-2 text-sm z-20">
+                <div
+                  id="navbar-perfil-menu"
+                  className="absolute right-0 mt-2 w-64 shadow rounded-xl bg-white border border-slate-100 py-2 text-sm z-20"
+                >
                   <div className="px-3 pb-1 pt-1 text-xs font-semibold text-slate-400 uppercase tracking-wide">
                     Mi cuenta
                   </div>

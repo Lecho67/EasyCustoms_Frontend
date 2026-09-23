@@ -72,6 +72,10 @@ export function NewQuery() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      {/* sr-only: la página no tenía ningún h1. El título visible de cada
+          paso (SectionCard) es un h2 — este es el ancestro que le da
+          jerarquía correcta. */}
+      <h1 className="sr-only">Nueva consulta</h1>
       {error && (
         <div className="mb-6 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
