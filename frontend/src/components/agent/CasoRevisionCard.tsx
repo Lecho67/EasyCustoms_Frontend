@@ -232,11 +232,18 @@ export function CasoRevisionCard({ caso, currentUserId, onClose, onResuelto }: P
                 </div>
               )}
               {diagnostico?.desgloseImpuestos && (
+                // Antes sumaba flete (un cálculo interno de referencia, no
+                // una cotización real) al "Total" — el agente decide sobre
+                // el caso con esta cifra, así que no puede mezclar un dato
+                // inventado con el arancel real del motor.
                 <div className="grid grid-cols-1 gap-1 border-t border-slate-100 pt-2 text-xs text-slate-500 sm:grid-cols-2">
-                  <p>Flete: US$ {diagnostico.desgloseImpuestos.flete}</p>
-                  <p>Arancel: US$ {diagnostico.desgloseImpuestos.arancel}</p>
+                  <p className="font-medium text-slate-700">
+                    Arancel estimado: US$ {diagnostico.desgloseImpuestos.arancel}
+                  </p>
                   <p>Tasa aplicada: {diagnostico.desgloseImpuestos.tasaArancelAplicada}%</p>
-                  <p className="font-medium text-slate-700">Total: US$ {diagnostico.desgloseImpuestos.total}</p>
+                  <p className="sm:col-span-2">
+                    Flete (referencia interna, no es una cotización): US$ {diagnostico.desgloseImpuestos.flete}
+                  </p>
                 </div>
               )}
             </div>
