@@ -132,6 +132,8 @@ export async function sugerirHsCode(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), HS_SUGGESTION_TIMEOUT_MS);
 
+  console.log(`🚀 [DEBUG HS-CODE] Iniciando solicitud para: "${descripcionItem}" (Categoría: ${categoria ?? 'N/A'})`);
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/v1/shipments/hs-code-suggestion`, {
       method: "POST",
@@ -146,7 +148,11 @@ export async function sugerirHsCode(
       signal: controller.signal,
     });
 
-    if (!response.ok) return { status: "error" };
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Sin cuerpo de respuesta");
+      console.error(`❌ [DEBUG HS-CODE] Backend devolvió HTTP ${response.status}:`, errorText);
+      return { status: "error" };
+    }
 
     const body = await response.json();
 
@@ -163,8 +169,16 @@ export async function sugerirHsCode(
       confidence: body.confidence_score,
       possibleHazmat: Boolean(body.possible_hazmat),
     };
-  } catch {
-    // Red caída, timeout (AbortError), JSON inválido: degradación silenciosa.
+} catch (err: unknown) {
+    if (err instanceof Error) {
+      if (err.name === "AbortError") {
+        console.error(`⏱️ [DEBUG HS-CODE] Abortado por TIMEOUT cliente (superó los ${HS_SUGGESTION_TIMEOUT_MS / 1000}s).`);
+      } else {
+        console.error("💥 [DEBUG HS-CODE] Error de red o parseo de JSON:", err.message, err);
+      }
+    } else {
+      console.error("💥 [DEBUG HS-CODE] Error desconocido:", err);
+    }
     return { status: "error" };
   } finally {
     clearTimeout(timeoutId);
