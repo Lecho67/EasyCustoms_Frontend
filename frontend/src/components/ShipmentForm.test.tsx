@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ShipmentForm } from "./ShipmentForm";
 import { sugerirHsCode } from "@/lib/api";
@@ -52,17 +52,18 @@ async function completarLogisticaYProducto(user: ReturnType<typeof userEvent.set
   await user.click(screen.getByRole("button", { name: "Siguiente" }));
 }
 
-/** Desde el paso 4 (las 4 declaraciones especiales, todas en "No" por
- * default) avanza al paso 5 — como ya no son pasos separados, alcanza con
- * un solo "Siguiente" para llegar al último paso. */
+/** Desde el paso 4 (la primera de las 4 declaraciones especiales, cada una
+ * en su propio paso, todas en "No" por default) avanza hasta el paso 8. */
 async function responderNoHastaElFinal(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: "Siguiente" }));
+  for (let i = 0; i < 4; i++) {
+    await user.click(screen.getByRole("button", { name: "Siguiente" }));
+  }
 }
 
 describe("ShipmentForm — navegación por pasos", () => {
-  it("arranca en el paso 1 de 5 y no muestra el botón Anterior", () => {
+  it("arranca en el paso 1 de 8 y no muestra el botón Anterior", () => {
     setup();
-    expect(screen.getByText("Paso 1 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 1 de 8")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Anterior" })).not.toBeInTheDocument();
   });
 
@@ -90,7 +91,7 @@ describe("ShipmentForm — navegación por pasos", () => {
 
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
-    expect(screen.getByText("Paso 1 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 1 de 8")).toBeInTheDocument();
     expect(screen.getByText("Selecciona un país de origen.")).toBeInTheDocument();
     expect(screen.getByText("Selecciona un tipo de transporte.")).toBeInTheDocument();
     expect(screen.getByText("Selecciona una modalidad de envío.")).toBeInTheDocument();
@@ -106,7 +107,7 @@ describe("ShipmentForm — navegación por pasos", () => {
     await elegirSelect(user, "Modalidad de envío", "Envío personal / regalo");
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
-    expect(screen.getByText("Paso 2 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 2 de 8")).toBeInTheDocument();
     expect(screen.queryByText("Selecciona un país de destino.")).not.toBeInTheDocument();
     expect(screen.queryByText("Describe el producto.")).not.toBeInTheDocument();
   });
@@ -120,7 +121,7 @@ describe("ShipmentForm — navegación por pasos", () => {
     await completarLogisticaYProducto(user);
     await responderNoHastaElFinal(user);
 
-    expect(screen.getByText("Paso 5 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 8 de 8")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /evaluar envío/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Siguiente" })).not.toBeInTheDocument();
   });
@@ -136,7 +137,7 @@ describe("ShipmentForm — navegación por pasos", () => {
 
     await user.click(screen.getByRole("button", { name: "Electrónica" }));
     await user.click(screen.getByRole("button", { name: "Anterior" }));
-    expect(screen.getByText("Paso 1 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 1 de 8")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
     expect(screen.getByPlaceholderText("Ej. Electrónica")).toHaveValue("Electrónica");
@@ -188,54 +189,56 @@ describe("ShipmentForm — paso 2 (destino y producto)", () => {
   });
 });
 
-describe("ShipmentForm — declaraciones especiales por paso", () => {
+describe("ShipmentForm — declaraciones especiales, cada una en su propio paso", () => {
+  it("cada declaración vive en su propio paso (4 a 7), en el orden esperado", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await completarLogisticaYProducto(user);
+    expect(screen.getByText("Paso 4 de 8")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "¿Tu envío contiene baterías de litio?" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(screen.getByText("Paso 5 de 8")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "¿Contiene líquidos, geles o aerosoles?" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(screen.getByText("Paso 6 de 8")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "¿Es un producto orgánico o biológico?" })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(screen.getByText("Paso 7 de 8")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "¿Es un medicamento o producto médicamente regulado?" })
+    ).toBeInTheDocument();
+  });
+
   it("responder 'Sí' en baterías despliega los sub-campos y los valida", async () => {
     const user = userEvent.setup();
     setup();
 
     await completarLogisticaYProducto(user);
 
-    expect(screen.getByText("Paso 4 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 4 de 8")).toBeInTheDocument();
     expect(screen.queryByText("Tipo de batería")).not.toBeInTheDocument();
 
-    // Las 4 declaraciones especiales conviven en el mismo paso, así que hay
-    // 4 pares de botones "Sí"/"No" en pantalla — se acota al grupo de
-    // baterías por su aria-label (ver YesNoToggle/DeclarationBlock).
-    const grupoBateria = screen.getByRole("group", {
-      name: "¿Tu envío contiene baterías de litio?",
-    });
-    await user.click(within(grupoBateria).getByRole("button", { name: "Sí" }));
+    await user.click(screen.getByRole("button", { name: "Sí" }));
     expect(screen.getByText("Tipo de batería")).toBeInTheDocument();
 
     // Sin elegir el tipo, "Siguiente" debe quedarse en el paso 4.
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
-    expect(screen.getByText("Paso 4 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 4 de 8")).toBeInTheDocument();
     expect(screen.getByText("Selecciona el tipo de batería.")).toBeInTheDocument();
 
     await elegirSelect(user, "Tipo de batería", "Litio-ion");
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
-    expect(screen.getByText("Paso 5 de 5")).toBeInTheDocument();
-  });
-
-  it("las 4 declaraciones especiales viven en el mismo paso", async () => {
-    const user = userEvent.setup();
-    setup();
-
-    await completarLogisticaYProducto(user);
-
-    expect(screen.getByText("Paso 4 de 5")).toBeInTheDocument();
-    expect(
-      screen.getByRole("group", { name: "¿Tu envío contiene baterías de litio?" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("group", { name: "¿Contiene líquidos, geles o aerosoles?" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("group", { name: "¿Es un producto orgánico o biológico?" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("group", { name: "¿Es un medicamento o producto médicamente regulado?" })
-    ).toBeInTheDocument();
+    expect(screen.getByText("Paso 5 de 8")).toBeInTheDocument();
   });
 
   it("responder 'No' no exige sub-campos y avanza directo", async () => {
@@ -243,17 +246,14 @@ describe("ShipmentForm — declaraciones especiales por paso", () => {
     setup();
 
     await completarLogisticaYProducto(user);
-    const grupoBateria = screen.getByRole("group", {
-      name: "¿Tu envío contiene baterías de litio?",
-    });
-    await user.click(within(grupoBateria).getByRole("button", { name: "No" }));
+    await user.click(screen.getByRole("button", { name: "No" }));
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
-    expect(screen.getByText("Paso 5 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 5 de 8")).toBeInTheDocument();
   });
 });
 
-describe("ShipmentForm — paso 5 (otras mercancías peligrosas)", () => {
+describe("ShipmentForm — paso 8 (otras mercancías peligrosas)", () => {
   it("sigue permitiendo selección múltiple sin pregunta Sí/No", async () => {
     const user = userEvent.setup();
     setup();
@@ -261,7 +261,7 @@ describe("ShipmentForm — paso 5 (otras mercancías peligrosas)", () => {
     await completarLogisticaYProducto(user);
     await responderNoHastaElFinal(user);
 
-    expect(screen.getByText("Paso 5 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 8 de 8")).toBeInTheDocument();
     const gasComprimido = screen.getByLabelText("Gas comprimido");
     await user.click(gasComprimido);
     expect(gasComprimido).toBeChecked();
@@ -290,7 +290,7 @@ describe("ShipmentForm — sugerencia de HS code (Paso 2 -> Paso 3)", () => {
 
     // El avance a Paso 3 no espera la promesa (sugerirHsCode nunca se resuelve
     // sincrónicamente) — si esto pasa, es porque no se bloqueó la navegación.
-    expect(screen.getByText("Paso 3 de 5")).toBeInTheDocument();
+    expect(screen.getByText("Paso 3 de 8")).toBeInTheDocument();
     expect(sugerirHsCodeMock).toHaveBeenCalledWith("audífonos inalámbricos", "Electrónica");
   });
 

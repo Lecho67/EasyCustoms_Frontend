@@ -34,7 +34,7 @@ export function DocumentReviewCard({ doc, onResuelto }: Props) {
   const handleVer = async () => {
     try {
       const url = await obtenerUrlDocumentoParaRevision(doc.file_path);
-      window.open(url, "_blank");
+      window.open(url, "_blank", "noopener,noreferrer");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al abrir el documento");
     }

@@ -11,6 +11,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { toast } from '../lib/toast';
 import { registrarSesion, sesionSigueVigente } from '../lib/sessionService';
+import { useQueryStore } from '../store/useQueryStore';
 import type { Profile } from '../types/database.types';
 import { AuthContext } from './auth';
 
@@ -144,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSesionDesplazada(true);
       // scope "local": el signOut global revocaría también la sesión nueva.
       await supabase.auth.signOut({ scope: 'local' });
+      useQueryStore.getState().reset();
     };
 
     verificar();
@@ -198,6 +200,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    // Logout es navegación SPA (sin recargar): sin esto, el caché en memoria
+    // de useQueryStore sobrevive y un usuario distinto que inicie sesión en
+    // la misma pestaña podría leer diagnósticos del usuario anterior.
+    useQueryStore.getState().reset();
   }, []);
 
   const refreshProfile = useCallback(async () => {

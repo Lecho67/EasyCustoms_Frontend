@@ -9,6 +9,7 @@ interface QueryState {
   consultas: DiagnosticoEnvio[];
   addConsulta: (consulta: DiagnosticoEnvio) => void;
   getConsultaById: (id: string) => DiagnosticoEnvio | undefined;
+  reset: () => void;
 }
 
 export const useQueryStore = create<QueryState>((set, get) => ({
@@ -16,4 +17,9 @@ export const useQueryStore = create<QueryState>((set, get) => ({
   addConsulta: (consulta) =>
     set((state) => ({ consultas: [consulta, ...state.consultas] })),
   getConsultaById: (id) => get().consultas.find((c) => c.id === id),
+  // Sin esto, un logout por SPA (sin recargar la página) deja los
+  // diagnósticos del usuario anterior en memoria: si otro usuario inicia
+  // sesión en la misma pestaña y vuelve a /consulta/<id> (botón atrás,
+  // autocompletado), ResultView los lee de acá antes de pasar por RLS.
+  reset: () => set({ consultas: [] }),
 }));

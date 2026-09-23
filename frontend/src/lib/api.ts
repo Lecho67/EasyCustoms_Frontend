@@ -10,7 +10,31 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 const USE_MOCK = !API_BASE_URL;
-const API_KEY = import.meta.env.VITE_X_API_KEY ?? "";
+
+/**
+ * En dev (`npm run dev`, Docker incluido) no hay runtime de Vercel Functions
+ * — se sigue llamando al backend directo con la API key, igual que siempre
+ * (superficie aceptable: vive en la máquina de quien desarrolla, nunca en un
+ * bundle público). En el build de producción, en cambio, se llama same-origin
+ * a /api/shipments/* (frontend/api/shipments/*.ts agrega la key server-side)
+ * para que VITE_X_API_KEY nunca viaje en el JS servido a cualquier visitante
+ * — hallazgo F5 del audit de seguridad, mismo patrón que GEMINI_API_KEY en
+ * api/chat.ts. `import.meta.env.DEV` es `false` en el build (Vite lo
+ * reemplaza por una constante y el minificador elimina la rama muerta), así
+ * que la key nunca llega a inlinearse en el bundle de producción.
+ */
+const EVALUATE_URL = import.meta.env.DEV
+  ? `${API_BASE_URL}/api/v1/shipments/evaluate`
+  : "/api/shipments/evaluate";
+const HS_CODE_URL = import.meta.env.DEV
+  ? `${API_BASE_URL}/api/v1/shipments/hs-code-suggestion`
+  : "/api/shipments/hs-code-suggestion";
+
+function headersHaciaMotor(): Record<string, string> {
+  if (!import.meta.env.DEV) return { "Content-Type": "application/json" };
+  const apiKey = import.meta.env.VITE_X_API_KEY ?? "";
+  return { "Content-Type": "application/json", ...(apiKey ? { "X-API-Key": apiKey } : {}) };
+}
 
 /**
  * Único punto de intercambio con el backend real (motor de reglas de
@@ -20,7 +44,8 @@ const API_KEY = import.meta.env.VITE_X_API_KEY ?? "";
  * `WizardFormData` -> `DiagnosticoEnvio` original que se documentó antes de
  * tener acceso al repo):
  *
- *   POST {VITE_API_BASE_URL}/api/v1/shipments/evaluate
+ *   POST {VITE_API_BASE_URL}/api/v1/shipments/evaluate (dev) o
+ *   POST /api/shipments/evaluate (producción, ver EVALUATE_URL arriba)
  *   Body: ShipmentEvaluationRequest (ver src/lib/shipmentMapping.ts)
  *   Response 200: DecisionEngineResult (ver src/lib/shipmentMapping.ts)
  *   Response 400: { error, message, details: [{ field, message }] } (Zod)
@@ -29,9 +54,9 @@ const API_KEY = import.meta.env.VITE_X_API_KEY ?? "";
  * El backend NO valida el JWT de Supabase (no tiene auth ni persistencia
  * propia) — la sesión de Supabase se sigue usando solo para guardar el
  * historial desde el cliente. La autenticación ante el motor de reglas es
- * por API key (`X-API-Key`, ver `VITE_X_API_KEY`): su CORS ya no permite el
- * header `Authorization` (no está en `allowedHeaders`), así que enviarlo
- * rompería el preflight y el fetch fallaría antes de llegar al backend.
+ * por API key (`X-API-Key`): su CORS ya no permite el header `Authorization`
+ * (no está en `allowedHeaders`), así que enviarlo rompería el preflight y el
+ * fetch fallaría antes de llegar al backend.
  */
 export async function evaluarEnvio(data: WizardFormData): Promise<DiagnosticoEnvio> {
   if (USE_MOCK) {
@@ -46,12 +71,9 @@ export async function evaluarEnvio(data: WizardFormData): Promise<DiagnosticoEnv
 
   const shipmentRequest = buildShipmentEvaluationRequest(data, user?.id ?? null);
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/shipments/evaluate`, {
+  const response = await fetch(EVALUATE_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
-    },
+    headers: headersHaciaMotor(),
     body: JSON.stringify(shipmentRequest),
   });
 
@@ -135,12 +157,9 @@ export async function sugerirHsCode(
   console.log(`🚀 [DEBUG HS-CODE] Iniciando solicitud para: "${descripcionItem}" (Categoría: ${categoria ?? 'N/A'})`);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/shipments/hs-code-suggestion`, {
+    const response = await fetch(HS_CODE_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
-      },
+      headers: headersHaciaMotor(),
       body: JSON.stringify({
         product_description: descripcionItem,
         ...(categoria ? { category: categoria } : {}),

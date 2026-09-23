@@ -147,16 +147,27 @@ function EnumSelect<T extends string>({
  * Wizard: pasos, metadata y mapeo de errores por paso
  * ==========================================================================*/
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 8;
 
 const STEP_META: { title: string; description: string }[] = [
   { title: "Logística", description: "Origen, transporte y modalidad del envío" },
   { title: "Destino y producto", description: "¿A dónde va el envío y qué contiene?" },
   { title: "Detalles del envío", description: "Peso, valor y cantidad declarados" },
   {
-    title: "Declaraciones especiales",
-    description:
-      "Marca las que apliquen a tu envío — los campos adicionales de cada una se abren solo si respondes 'Sí'.",
+    title: "¿Tu envío contiene baterías de litio?",
+    description: "Incluye power banks, equipos con batería recargable integrada y baterías sueltas.",
+  },
+  {
+    title: "¿Contiene líquidos, geles o aerosoles?",
+    description: "Cosméticos, perfumes, productos de limpieza o líquidos alimenticios.",
+  },
+  {
+    title: "¿Es un producto orgánico o biológico?",
+    description: "Alimentos, plantas, semillas o productos de origen animal o vegetal.",
+  },
+  {
+    title: "¿Es un medicamento o producto médicamente regulado?",
+    description: "Medicamentos, dispositivos médicos o sustancias controladas.",
   },
   {
     title: "Otras mercancías peligrosas",
@@ -206,8 +217,11 @@ const STEP_ERROR_KEYS: Record<number, ErrorKey[]> = {
   1: ["paisOrigen", "transportType", "shipmentModality"],
   2: ["descripcionItem"],
   3: ["pesoKg", "valorDeclaradoUsd"],
-  4: ["bateriaTipo", "liquidoCategoria", "organicoTipo", "medicoTipo"],
-  5: [],
+  4: ["bateriaTipo"],
+  5: ["liquidoCategoria"],
+  6: ["organicoTipo"],
+  7: ["medicoTipo"],
+  8: [],
 };
 
 const validate = validateWizardFormData;
@@ -294,30 +308,6 @@ const YesNoToggle: React.FC<{
 const SubfieldsGrid: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-6 border-l-2 border-cobalt/20">
     {children}
-  </div>
-);
-
-/**
- * Cada declaración especial (batería, líquidos, orgánico, médico) vivía en
- * su propio paso del wizard — 4 pantallas de un Sí/No cada una, la mayoría
- * de las veces respondidas "No". Ahora las 4 comparten un solo paso; este
- * wrapper agrupa el título, la pista y el toggle, y solo revela sus
- * children (los sub-campos) cuando la respuesta es "Sí". `ariaLabel` en
- * YesNoToggle distingue los 4 grupos de botones "Sí"/"No" idénticos que
- * ahora conviven en la misma pantalla.
- */
-const DeclarationBlock: React.FC<{
-  title: string;
-  hint: string;
-  value: boolean;
-  onChange: (value: boolean) => void;
-  children?: React.ReactNode;
-}> = ({ title, hint, value, onChange, children }) => (
-  <div className="border-t border-slate-100 pt-5 first:border-t-0 first:pt-0">
-    <p className="text-sm font-medium text-slate-800">{title}</p>
-    <p className="text-xs text-slate-500 mb-2">{hint}</p>
-    <YesNoToggle value={value} onChange={onChange} ariaLabel={title} />
-    {value && children}
   </div>
 );
 
@@ -650,12 +640,12 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
 
       {step === 4 && (
         <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
-          <DeclarationBlock
-            title="¿Tu envío contiene baterías de litio?"
-            hint="Incluye power banks, equipos con batería recargable integrada y baterías sueltas."
+          <YesNoToggle
             value={decl.contieneBateriaLitio}
             onChange={(contieneBateriaLitio) => updateDecl({ contieneBateriaLitio })}
-          >
+            ariaLabel={meta.title}
+          />
+          {decl.contieneBateriaLitio && (
             <SubfieldsGrid>
               <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">
@@ -717,14 +707,18 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 }
               />
             </SubfieldsGrid>
-          </DeclarationBlock>
+          )}
+        </SectionCard>
+      )}
 
-          <DeclarationBlock
-            title="¿Contiene líquidos, geles o aerosoles?"
-            hint="Cosméticos, perfumes, productos de limpieza o líquidos alimenticios."
+      {step === 5 && (
+        <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
+          <YesNoToggle
             value={decl.contieneLiquidos}
             onChange={(contieneLiquidos) => updateDecl({ contieneLiquidos })}
-          >
+            ariaLabel={meta.title}
+          />
+          {decl.contieneLiquidos && (
             <SubfieldsGrid>
               <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">
@@ -769,14 +763,18 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 />
               </div>
             </SubfieldsGrid>
-          </DeclarationBlock>
+          )}
+        </SectionCard>
+      )}
 
-          <DeclarationBlock
-            title="¿Es un producto orgánico o biológico?"
-            hint="Alimentos, plantas, semillas o productos de origen animal o vegetal."
+      {step === 6 && (
+        <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
+          <YesNoToggle
             value={decl.esOrganicoOBiologico}
             onChange={(esOrganicoOBiologico) => updateDecl({ esOrganicoOBiologico })}
-          >
+            ariaLabel={meta.title}
+          />
+          {decl.esOrganicoOBiologico && (
             <SubfieldsGrid>
               <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">
@@ -819,14 +817,18 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 />
               </div>
             </SubfieldsGrid>
-          </DeclarationBlock>
+          )}
+        </SectionCard>
+      )}
 
-          <DeclarationBlock
-            title="¿Es un medicamento o producto médicamente regulado?"
-            hint="Medicamentos, dispositivos médicos o sustancias controladas."
+      {step === 7 && (
+        <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
+          <YesNoToggle
             value={decl.esMedicamentoRegulado}
             onChange={(esMedicamentoRegulado) => updateDecl({ esMedicamentoRegulado })}
-          >
+            ariaLabel={meta.title}
+          />
+          {decl.esMedicamentoRegulado && (
             <SubfieldsGrid>
               <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">
@@ -857,11 +859,11 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 />
               </div>
             </SubfieldsGrid>
-          </DeclarationBlock>
+          )}
         </SectionCard>
       )}
 
-      {step === 5 && (
+      {step === 8 && (
         <SectionCard title={meta.title} description={meta.description} headingRef={headingRef}>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {OTHER_DANGEROUS_GOODS_OPTIONS.map((opt) => (

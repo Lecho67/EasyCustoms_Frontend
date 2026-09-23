@@ -92,7 +92,7 @@ describe("evaluarEnvio — headers hacia el motor de reglas", () => {
     expect(headers).not.toHaveProperty("Authorization");
   });
 
-  it("manda X-API-Key cuando VITE_X_API_KEY está seteada", async () => {
+  it("manda X-API-Key cuando VITE_X_API_KEY está seteada (dev, backend directo)", async () => {
     vi.stubEnv("VITE_X_API_KEY", "test-key-123");
     vi.resetModules();
     const { evaluarEnvio: evaluarEnvioConKey } = await import("./api");
@@ -111,6 +111,61 @@ describe("evaluarEnvio — headers hacia el motor de reglas", () => {
 
     const headers = (fetch as Mock).mock.calls[0][1].headers as Record<string, string>;
     expect(headers["X-API-Key"]).toBe("test-key-123");
+
+    vi.unstubAllEnvs();
+  });
+});
+
+describe("evaluarEnvio — en producción llama same-origin, sin la key (F5 del audit de seguridad)", () => {
+  // import.meta.env.DEV es false solo en el build real; se simula acá para
+  // no depender de correr un build completo en cada test. La key nunca debe
+  // viajar en un fetch que Vite podría inlinear en el bundle servido.
+  it("llama /api/shipments/evaluate same-origin y no manda X-API-Key aunque esté seteada", async () => {
+    vi.stubEnv("DEV", false);
+    vi.stubEnv("VITE_X_API_KEY", "test-key-123");
+    vi.resetModules();
+    const { evaluarEnvio: evaluarEnvioProd } = await import("./api");
+
+    (fetch as Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        final_status: "APROBADO",
+        evaluated_at: "2026-01-01T00:00:00Z",
+        alerts: [],
+        tax_estimation: { requires_taxes: false },
+      }),
+    });
+
+    await evaluarEnvioProd(wizard());
+
+    const [url, init] = (fetch as Mock).mock.calls[0];
+    expect(url).toBe("/api/shipments/evaluate");
+    expect(init.headers).not.toHaveProperty("X-API-Key");
+
+    vi.unstubAllEnvs();
+  });
+
+  it("sugerirHsCode llama /api/shipments/hs-code-suggestion same-origin y no manda X-API-Key", async () => {
+    vi.stubEnv("DEV", false);
+    vi.stubEnv("VITE_X_API_KEY", "test-key-123");
+    vi.resetModules();
+    const { sugerirHsCode: sugerirHsCodeProd } = await import("./api");
+
+    (fetch as Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        hs_code: "610910",
+        hs_description: "Camisetas de algodón",
+        confidence_score: 0.9,
+        possible_hazmat: false,
+      }),
+    });
+
+    await sugerirHsCodeProd("camiseta");
+
+    const [url, init] = (fetch as Mock).mock.calls[0];
+    expect(url).toBe("/api/shipments/hs-code-suggestion");
+    expect(init.headers).not.toHaveProperty("X-API-Key");
 
     vi.unstubAllEnvs();
   });

@@ -2,13 +2,16 @@ import { supabase } from "./supabase";
 import type { CustomsQuery, Profile } from "@/types/database.types";
 
 export interface CasoEnCola extends CustomsQuery {
-  cliente?: Profile;
+  // Acotado a lo que pinta la UI (nombre/email en la cola) — no el perfil
+  // completo: evita mandar document_number/dirección/kyc_document_path de
+  // cada cliente a cualquier agente que abra la cola.
+  cliente?: Pick<Profile, "id" | "full_name" | "email">;
 }
 
 export async function fetchColaDeRevision(): Promise<CasoEnCola[]> {
   const { data, error } = await supabase
     .from("customs_queries")
-    .select("*, cliente:profiles!customs_queries_user_id_fkey(*)")
+    .select("*, cliente:profiles!customs_queries_user_id_fkey(id, full_name, email)")
     .in("ai_verdict", ["REQUIERE_DOCUMENTACION", "PRECAUCION"])
     .is("overridden_by", null) // ya confirmado/sobrescrito por un agente: sale de la cola
     .order("created_at", { ascending: true });

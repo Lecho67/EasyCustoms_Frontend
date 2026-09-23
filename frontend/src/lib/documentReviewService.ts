@@ -2,13 +2,16 @@ import { supabase } from "./supabase";
 import type { DocumentRecord, Profile } from "@/types/database.types";
 
 export interface DocumentoConCliente extends DocumentRecord {
-  cliente?: Profile;
+  // Acotado a lo que pinta la UI (nombre/email en la cola) — no el perfil
+  // completo: evita mandar document_number/dirección/kyc_document_path de
+  // cada cliente a cualquier agente que abra la cola.
+  cliente?: Pick<Profile, "id" | "full_name" | "email">;
 }
 
 export async function fetchDocumentosPendientes(): Promise<DocumentoConCliente[]> {
   const { data, error } = await supabase
     .from("documents")
-    .select("*, cliente:profiles!documents_user_id_fkey(*)")
+    .select("*, cliente:profiles!documents_user_id_fkey(id, full_name, email)")
     .eq("status", "pendiente")
     .order("created_at", { ascending: true });
 

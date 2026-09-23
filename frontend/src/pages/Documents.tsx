@@ -52,7 +52,7 @@ export default function Documents() {
   const handleVer = async (doc: DocumentRecord) => {
     try {
       const url = await obtenerUrlDocumento(doc.file_path);
-      window.open(url, "_blank");
+      window.open(url, "_blank", "noopener,noreferrer");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al abrir el documento");
     }

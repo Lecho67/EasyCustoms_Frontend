@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { registrarSesion, sesionSigueVigente } from "@/lib/sessionService";
+import { useQueryStore } from "@/store/useQueryStore";
 import type { Profile } from "@/types/database.types";
 
 const singleMock = vi.fn();
@@ -78,11 +79,12 @@ function fakeProfile(over: Partial<Profile> = {}): Profile {
 }
 
 function Harness() {
-  const { profile, loading, profileError, refreshProfile, signIn, sesionDesplazada, descartarAvisoSesion } =
+  const { profile, loading, profileError, refreshProfile, signIn, signOut, sesionDesplazada, descartarAvisoSesion } =
     useAuth();
   return (
     <div>
       <button onClick={() => signIn("a@b.c", "clave")}>ingresar</button>
+      <button onClick={() => signOut()}>cerrar-sesion</button>
       <span data-testid="desplazada">{String(sesionDesplazada)}</span>
       <button onClick={descartarAvisoSesion}>descartar-aviso</button>
       <span data-testid="loading">{String(loading)}</span>
@@ -115,6 +117,7 @@ beforeEach(() => {
   signOutMock.mockReset().mockResolvedValue({ error: null });
   vi.mocked(registrarSesion).mockReset().mockResolvedValue(undefined);
   vi.mocked(sesionSigueVigente).mockReset().mockResolvedValue(true);
+  useQueryStore.setState({ consultas: [] });
 });
 
 describe("AuthContext — carga de perfil", () => {
@@ -183,16 +186,37 @@ describe("AuthContext — carga de perfil", () => {
   });
 });
 
+describe("AuthContext — logout limpia el caché de consultas", () => {
+  it("signOut() vacía useQueryStore para que otro usuario en la misma pestaña no herede diagnósticos ajenos", async () => {
+    singleMock.mockResolvedValue({ data: fakeProfile(), error: null });
+    useQueryStore.setState({
+      consultas: [{ id: "diag-ajeno" } as ReturnType<typeof useQueryStore.getState>["consultas"][number]],
+    });
+
+    renderHarness();
+    await waitFor(() => expect(screen.getByTestId("loading").textContent).toBe("false"));
+
+    await userEvent.click(screen.getByText("cerrar-sesion"));
+
+    await waitFor(() => expect(signOutMock).toHaveBeenCalled());
+    expect(useQueryStore.getState().consultas).toEqual([]);
+  });
+});
+
 describe("AuthContext — sesión única por cuenta", () => {
-  it("cierra la sesión en local y levanta el aviso cuando otra sesión tomó la cuenta", async () => {
+  it("cierra la sesión en local, levanta el aviso y limpia useQueryStore cuando otra sesión tomó la cuenta", async () => {
     singleMock.mockResolvedValue({ data: fakeProfile(), error: null });
     vi.mocked(sesionSigueVigente).mockResolvedValue(false);
+    useQueryStore.setState({
+      consultas: [{ id: "diag-ajeno" } as ReturnType<typeof useQueryStore.getState>["consultas"][number]],
+    });
 
     renderHarness();
 
     // scope "local": un signOut global revocaría también la sesión nueva
     await waitFor(() => expect(signOutMock).toHaveBeenCalledWith({ scope: "local" }));
     expect(screen.getByTestId("desplazada").textContent).toBe("true");
+    expect(useQueryStore.getState().consultas).toEqual([]);
   });
 
   it("el aviso se puede descartar", async () => {
