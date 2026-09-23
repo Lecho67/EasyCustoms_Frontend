@@ -9,10 +9,15 @@ import { Footer } from "@/components/layout/Footer";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { SessionKickedModal } from "@/components/SessionKickedModal";
-import { SupportChatWidget } from "@/components/support/SupportChatWidget";
 // Pitch es la home ("/" y "/pitch"): se carga eager para que la primera visita
 // no vea un spinner. El resto de las vistas van por ruta con React.lazy.
 import { Pitch } from "@/pages/Pitch";
+
+// Solo lo ve el rol "cliente" (ver Layout) — sacarlo del bundle de entrada
+// evita que agente/gestor/admin y cualquier visitante anónimo lo descarguen.
+const SupportChatWidget = lazy(() =>
+  import("@/components/support/SupportChatWidget").then((m) => ({ default: m.SupportChatWidget }))
+);
 
 const Landing = lazy(() => import("@/pages/Landing").then((m) => ({ default: m.Landing })));
 const Login = lazy(() => import("@/pages/Login").then((m) => ({ default: m.Login })));
@@ -51,7 +56,11 @@ function Layout({ children }: { children: React.ReactNode }) {
       <CookieConsentBanner />
       {/* Solo clientes: "pedir un asesor personal" y "mis consultas" son
           conceptos de esa relación cliente-asesor, no aplican a roles internos. */}
-      {profile?.role === "cliente" && <SupportChatWidget />}
+      {profile?.role === "cliente" && (
+        <Suspense fallback={null}>
+          <SupportChatWidget />
+        </Suspense>
+      )}
     </div>
   );
 }
