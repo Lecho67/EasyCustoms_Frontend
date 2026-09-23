@@ -22,6 +22,7 @@ vi.mock("@/store/useQueryStore", () => ({
 vi.mock("@/components/verdict/VerdictCard", () => ({
   VerdictCard: () => <div>verdict-card</div>,
 }));
+vi.mock("@/components/verdict/NextStepsCard", () => ({ NextStepsCard: () => null }));
 vi.mock("@/components/verdict/JustificationCard", () => ({ JustificationCard: () => null }));
 vi.mock("@/components/verdict/DocumentChecklist", () => ({ DocumentChecklist: () => null }));
 vi.mock("@/components/verdict/TaxBreakdownCard", () => ({ TaxBreakdownCard: () => null }));

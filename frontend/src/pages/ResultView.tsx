@@ -5,6 +5,7 @@ import { History as HistoryIcon, Plus, CheckCircle2 } from "lucide-react";
 import { useQueryStore } from "@/store/useQueryStore";
 import { fetchConsultaById } from "@/lib/queryHistoryService";
 import { VerdictCard } from "@/components/verdict/VerdictCard";
+import { NextStepsCard } from "@/components/verdict/NextStepsCard";
 import { JustificationCard } from "@/components/verdict/JustificationCard";
 import { DocumentChecklist } from "@/components/verdict/DocumentChecklist";
 import { TaxBreakdownCard } from "@/components/verdict/TaxBreakdownCard";
@@ -66,6 +67,8 @@ export function ResultView() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-6">
       <VerdictCard diagnostico={diagnostico} />
+
+      <NextStepsCard acciones={diagnostico.accionesSugeridas} />
 
       <div className="grid sm:grid-cols-2 gap-4">
         <JustificationCard
