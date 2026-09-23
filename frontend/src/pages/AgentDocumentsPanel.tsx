@@ -1,39 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchDocumentosPendientes, type DocumentoConCliente } from "@/lib/documentReviewService";
 import { DocumentReviewCard } from "@/components/documents/DocumentReviewCard";
 import { Pagination } from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useAsyncData } from "@/hooks/useAsyncData";
 
 type Asignacion = "todas" | "sin_asignar" | "mias";
 type Orden = "antiguos" | "recientes";
 
 export function AgentDocumentsPanel() {
   const { user } = useAuth();
-  const [docs, setDocs] = useState<DocumentoConCliente[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: docs,
+    loading,
+    error,
+    setData: setDocs,
+  } = useAsyncData(fetchDocumentosPendientes, [] as DocumentoConCliente[], [], {
+    mensajeError: "Error al cargar documentos",
+  });
 
   const [busqueda, setBusqueda] = useState("");
   const [asignacion, setAsignacion] = useState<Asignacion>("todas");
   const [orden, setOrden] = useState<Orden>("antiguos");
-
-  const cargar = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchDocumentosPendientes();
-      setDocs(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar documentos");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargar();
-  }, []);
 
   const handleResuelto = (id: string) => {
     setDocs((prev) => prev.filter((d) => d.id !== id));
@@ -68,7 +57,7 @@ export function AgentDocumentsPanel() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-16 p-6">
+    <div className="max-w-4xl mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-bold text-cobalt mb-2">Revisión de Documentos</h1>
       <p className="text-sm text-slate-500 mb-6">
         {filtrados.length} de {docs.length} documento{docs.length !== 1 && "s"} pendiente
@@ -89,7 +78,7 @@ export function AgentDocumentsPanel() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Cliente o nombre de archivo"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm"
             />
           </div>
           <div>
@@ -100,7 +89,7 @@ export function AgentDocumentsPanel() {
               id="doc-asignacion"
               value={asignacion}
               onChange={(e) => setAsignacion(e.target.value as Asignacion)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm"
             >
               <option value="todas">Todas</option>
               <option value="sin_asignar">Sin asignar</option>
@@ -115,7 +104,7 @@ export function AgentDocumentsPanel() {
               id="doc-orden"
               value={orden}
               onChange={(e) => setOrden(e.target.value as Orden)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm"
             >
               <option value="antiguos">Más antiguos primero</option>
               <option value="recientes">Más recientes primero</option>

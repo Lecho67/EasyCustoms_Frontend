@@ -121,7 +121,7 @@ export function Pitch() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-cobalt/75 via-cobalt/62 to-cobalt/45" />
         <div className="absolute inset-0 -z-10 bg-cobalt/60" />
 
-        <div className="max-w-2xl mx-auto px-6 pt-14 pb-28 sm:pt-24 sm:pb-20 text-center">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-28 sm:pt-24 sm:pb-20 text-center">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 ring-1 ring-white/25 text-white text-xs font-medium mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-cian"></span>
             Validación de IA aplicada a reglas de negocio críticas
@@ -167,7 +167,7 @@ export function Pitch() {
       diseñados con IA para darte resultados precisos al instante.
     </p>
 
-<div className="max-w-4xl mx-auto px-6 pb-10 grid sm:grid-cols-3 gap-5">
+<div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 grid sm:grid-cols-3 gap-5">
   {valores.map((v) => (
     <div key={v.numero} className="rounded-xl border border-slate-200 bg-white p-6">
       <div className="flex items-center gap-3 mb-2">
@@ -206,7 +206,7 @@ export function Pitch() {
         {/* Velo cobalto: mismo tratamiento que el hero, para legibilidad del texto claro */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-cobalt/80 via-cobalt/68 to-cobalt/85" />
 
-        <div className="max-w-5xl mx-auto px-6 py-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <p className="text-xs font-semibold text-white uppercase tracking-wide mb-2 text-center">
             Cómo funciona
           </p>
@@ -240,7 +240,7 @@ export function Pitch() {
 
 
       {/* Beneficios / Casos de uso */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <p className="text-xs font-semibold text-cobalt uppercase tracking-wide mb-2 text-center">
           Beneficios para paquetería y e-commerce
         </p>
@@ -284,7 +284,7 @@ export function Pitch() {
   {/* Velo cobalto: mismo tratamiento que el hero y "Cómo funciona" */}
   <div className="absolute inset-0 -z-10 bg-gradient-to-b from-cobalt/80 via-cobalt/68 to-cobalt/85" />
 
-  <div className="max-w-4xl mx-auto px-6 py-20">
+  <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
     <p className="text-xs font-semibold text-white uppercase tracking-wide mb-2 text-center">
       Casillero e importación/exportación directa
     </p>
@@ -308,7 +308,7 @@ export function Pitch() {
       </section>
 
       {/* Equipo */}
-      <section className="bg-white border-y border-slate-200 max-w-3xl mx-auto px-6 py-20 text-center">
+      <section className="bg-white border-y border-slate-200 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         <p className="text-xs font-semibold text-cobalt uppercase tracking-wide mb-2">
           Quiénes estamos detrás
         </p>
@@ -348,7 +348,7 @@ export function Pitch() {
         {/* Velo cobalto: mismo tratamiento que el hero, "Cómo funciona" y la comparativa */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-cobalt/80 via-cobalt/68 to-cobalt/85" />
 
-        <div className="max-w-2xl mx-auto px-6 py-20">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <p className="text-xs font-semibold text-white uppercase tracking-wide mb-2 text-center">
             Preguntas frecuentes
           </p>

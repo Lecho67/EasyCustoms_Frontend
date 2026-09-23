@@ -1,30 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { fetchMetricasGlobales, type MetricasGlobales } from "@/lib/adminService";
 import { toast } from "@/lib/toast";
+import { useAsyncData } from "@/hooks/useAsyncData";
 
 export function MetricsOverview() {
-  const [metricas, setMetricas] = useState<MetricasGlobales | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: metricas, loading, error } = useAsyncData<MetricasGlobales | null>(
+    fetchMetricasGlobales,
+    null,
+    [],
+    { mensajeError: "Error al cargar métricas" }
+  );
 
   useEffect(() => {
-    let activo = true;
-    fetchMetricasGlobales()
-      .then((data) => {
-        if (activo) setMetricas(data);
-      })
-      .catch((err) => {
-        const msg = err instanceof Error ? err.message : "Error al cargar métricas";
-        if (activo) setError(msg);
-        toast.error("No se pudieron cargar las métricas", msg);
-      })
-      .finally(() => {
-        if (activo) setLoading(false);
-      });
-    return () => {
-      activo = false;
-    };
-  }, []);
+    if (error) toast.error("No se pudieron cargar las métricas", error);
+  }, [error]);
 
   if (loading) {
     return (

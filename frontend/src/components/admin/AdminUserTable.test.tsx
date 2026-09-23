@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdminUserTable } from "./AdminUserTable";
 import { fetchTodosLosUsuarios, actualizarRol } from "@/lib/adminService";
@@ -52,19 +52,27 @@ beforeEach(() => {
   actualizarRolMock.mockClear().mockResolvedValue({} as never);
 });
 
+/**
+ * Cada usuario se renderiza dos veces: tarjeta (mobile) y fila de tabla
+ * (desktop), una de las dos oculta por CSS. jsdom no aplica CSS, así que las
+ * consultas se acotan a la tabla para no encontrar duplicados.
+ */
+const tabla = () => within(screen.getByRole("table"));
+
 describe("AdminUserTable", () => {
   it("carga y muestra los usuarios", async () => {
     render(<AdminUserTable />);
-    expect(await screen.findByText("Juan Pérez")).toBeInTheDocument();
-    expect(screen.getByText("juan@test.test")).toBeInTheDocument();
+    await screen.findByRole("table");
+    expect(tabla().getByText("Juan Pérez")).toBeInTheDocument();
+    expect(tabla().getByText("juan@test.test")).toBeInTheDocument();
   });
 
   it("cambiar el rol abre el modal de confirmación sin aplicar el cambio todavía", async () => {
     const user = userEvent.setup();
     render(<AdminUserTable />);
-    await screen.findByText("Juan Pérez");
+    await screen.findByRole("table");
 
-    const [selectRol] = screen.getAllByRole("combobox");
+    const [selectRol] = tabla().getAllByRole("combobox");
     await user.selectOptions(selectRol, "agente");
 
     expect(screen.getByText("Confirmar cambio")).toBeInTheDocument();
@@ -74,9 +82,9 @@ describe("AdminUserTable", () => {
   it("muestra la advertencia al ascender a admin", async () => {
     const user = userEvent.setup();
     render(<AdminUserTable />);
-    await screen.findByText("Juan Pérez");
+    await screen.findByRole("table");
 
-    const [selectRol] = screen.getAllByRole("combobox");
+    const [selectRol] = tabla().getAllByRole("combobox");
     await user.selectOptions(selectRol, "admin");
 
     expect(screen.getByText(/control total del sistema/i)).toBeInTheDocument();
@@ -85,9 +93,9 @@ describe("AdminUserTable", () => {
   it("'Cancelar' cierra el modal sin llamar al servicio", async () => {
     const user = userEvent.setup();
     render(<AdminUserTable />);
-    await screen.findByText("Juan Pérez");
+    await screen.findByRole("table");
 
-    await user.selectOptions(screen.getAllByRole("combobox")[0], "agente");
+    await user.selectOptions(tabla().getAllByRole("combobox")[0], "agente");
     await user.click(screen.getByText("Cancelar"));
 
     expect(screen.queryByText("Confirmar cambio")).not.toBeInTheDocument();
@@ -97,9 +105,9 @@ describe("AdminUserTable", () => {
   it("'Confirmar' aplica el cambio de rol", async () => {
     const user = userEvent.setup();
     render(<AdminUserTable />);
-    await screen.findByText("Juan Pérez");
+    await screen.findByRole("table");
 
-    await user.selectOptions(screen.getAllByRole("combobox")[0], "agente");
+    await user.selectOptions(tabla().getAllByRole("combobox")[0], "agente");
     await user.click(screen.getByRole("button", { name: "Confirmar" }));
 
     await waitFor(() => expect(actualizarRolMock).toHaveBeenCalledWith("u1", "agente"));
@@ -114,14 +122,14 @@ describe("AdminUserTable", () => {
       ),
     );
     render(<AdminUserTable />);
-    await screen.findByText("Usuario 1");
+    await screen.findByRole("table");
 
-    expect(screen.queryByText("Usuario 9")).not.toBeInTheDocument();
+    expect(tabla().queryByText("Usuario 9")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /siguiente/i }));
 
-    expect(screen.queryByText("Usuario 1")).not.toBeInTheDocument();
-    expect(screen.getByText("Usuario 9")).toBeInTheDocument();
+    expect(tabla().queryByText("Usuario 1")).not.toBeInTheDocument();
+    expect(tabla().getByText("Usuario 9")).toBeInTheDocument();
   });
 
   it("filtra por nombre o correo", async () => {
@@ -132,11 +140,11 @@ describe("AdminUserTable", () => {
       ),
     );
     render(<AdminUserTable />);
-    await screen.findByText("Usuario 1");
+    await screen.findByRole("table");
 
     await user.type(screen.getByLabelText("Buscar usuario"), "Usuario 9");
 
-    expect(screen.getByText("Usuario 9")).toBeInTheDocument();
-    expect(screen.queryByText("Usuario 1")).not.toBeInTheDocument();
+    expect(tabla().getByText("Usuario 9")).toBeInTheDocument();
+    expect(tabla().queryByText("Usuario 1")).not.toBeInTheDocument();
   });
 });

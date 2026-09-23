@@ -24,14 +24,20 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-      // Pre-existente en varios `... as any` de los wizards; visible pero no bloquea.
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
       // Habría cazado el <section> suelto dentro del useEffect de CasoRevisionCard
       "no-unused-expressions": "off",
       "@typescript-eslint/no-unused-expressions": [
         "error",
         { allowShortCircuit: true, allowTernary: true },
       ],
+    },
+  },
+  {
+    // Vercel Serverless Functions (Node, no DOM) — ver frontend/vercel.json.
+    files: ["api/**/*.ts"],
+    languageOptions: {
+      globals: globals.node,
     },
   }
 );

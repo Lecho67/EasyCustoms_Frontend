@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchColaDeRevision, type CasoEnCola } from "@/lib/agentService";
 import { CasoRevisionCard } from "@/components/agent/CasoRevisionCard";
 import { Pagination } from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useAsyncData } from "@/hooks/useAsyncData";
 import type { DiagnosticoEnvio } from "@/lib/types";
 import { badgeVerdictoClasses } from "@/lib/verdictBadge";
 
@@ -14,6 +15,10 @@ function paisDeCaso(caso: CasoEnCola): string {
 
 
 
+function formatearFecha(iso: string): string {
+  return new Date(iso).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 function estadoDeCaso(caso: CasoEnCola, currentUserId?: string): { label: string; classes: string } {
   if (!caso.assigned_agent_id) return { label: "Sin asignar", classes: "bg-slate-100 text-slate-600" };
   if (caso.assigned_agent_id === currentUserId)
@@ -23,31 +28,19 @@ function estadoDeCaso(caso: CasoEnCola, currentUserId?: string): { label: string
 
 export function AgentPanel() {
   const { user } = useAuth();
-  const [casos, setCasos] = useState<CasoEnCola[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: casos,
+    loading,
+    error,
+    setData: setCasos,
+  } = useAsyncData(fetchColaDeRevision, [] as CasoEnCola[], [], {
+    mensajeError: "Error al cargar la cola",
+  });
 
   const [filtroPais, setFiltroPais] = useState("todos");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [casoSeleccionadoId, setCasoSeleccionadoId] = useState<string | null>(null);
-
-  const cargarCola = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchColaDeRevision();
-      setCasos(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar la cola");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargarCola();
-  }, []);
 
   const paisesDisponibles = useMemo(() => {
     const set = new Set(casos.map(paisDeCaso).filter((p) => p !== "—"));
@@ -81,14 +74,14 @@ export function AgentPanel() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-dvh flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-cobalt border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto mt-16 p-6">
+    <div className="max-w-6xl mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-bold text-cobalt mb-2">Cola de Revisión</h1>
       <p className="text-slate-600 mb-6">
         {casosFiltrados.length} de {casos.length} caso{casos.length !== 1 && "s"} pendiente
@@ -107,7 +100,7 @@ export function AgentPanel() {
             id="filtro-pais"
             value={filtroPais}
             onChange={(e) => setFiltroPais(e.target.value)}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+            className="w-full sm:w-auto border border-slate-300 rounded-lg px-3 py-2 text-base sm:text-sm bg-white"
           >
             <option value="todos">Todos</option>
             {paisesDisponibles.map((pais) => (
@@ -126,7 +119,7 @@ export function AgentPanel() {
             type="date"
             value={fechaDesde}
             onChange={(e) => setFechaDesde(e.target.value)}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+            className="w-full sm:w-auto border border-slate-300 rounded-lg px-3 py-2 text-base sm:text-sm bg-white"
           />
         </div>
         <div>
@@ -138,7 +131,7 @@ export function AgentPanel() {
             type="date"
             value={fechaHasta}
             onChange={(e) => setFechaHasta(e.target.value)}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+            className="w-full sm:w-auto border border-slate-300 rounded-lg px-3 py-2 text-base sm:text-sm bg-white"
           />
         </div>
         {(filtroPais !== "todos" || fechaDesde || fechaHasta) && (
@@ -156,7 +149,41 @@ export function AgentPanel() {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
+          {/* Mobile: tarjetas. La tabla de 7 columnas es inusable a 360px. */}
+          <ul className="space-y-3 md:hidden">
+            {pageItems.map((caso) => {
+              const estado = estadoDeCaso(caso, user?.id);
+              return (
+                <li key={caso.id} className="rounded-xl border border-slate-200 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 flex-1 break-words font-medium text-slate-800">
+                      {caso.cliente?.full_name || caso.cliente?.email || caso.user_id}
+                    </p>
+                    <span className={`shrink-0 rounded px-2 py-1 text-xs font-medium ${estado.classes}`}>
+                      {estado.label}
+                    </span>
+                  </div>
+                  <p className="mt-1 break-words text-sm text-slate-600">{caso.product_description}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <span className={`rounded px-2 py-1 font-medium ${badgeVerdictoClasses(caso.ai_verdict)}`}>
+                      {caso.ai_verdict}
+                    </span>
+                    <span>{paisDeCaso(caso)}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{formatearFecha(caso.created_at)}</span>
+                  </div>
+                  <button
+                    onClick={() => setCasoSeleccionadoId(caso.id)}
+                    className="mt-3 flex min-h-11 w-full items-center justify-center rounded-xl border border-cobalt text-sm font-medium text-cobalt transition-colors hover:bg-cobalt/5"
+                  >
+                    Auditar caso
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="hidden overflow-x-auto rounded-xl border border-slate-200 md:block">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
@@ -190,13 +217,7 @@ export function AgentPanel() {
                           {caso.ai_verdict}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-500">
-                        {new Date(caso.created_at).toLocaleDateString("es-CO", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </td>
+                      <td className="px-4 py-3 text-slate-500">{formatearFecha(caso.created_at)}</td>
                       <td className="px-4 py-3">
                         <span className={`text-xs font-medium px-2 py-1 rounded ${estado.classes}`}>
                           {estado.label}

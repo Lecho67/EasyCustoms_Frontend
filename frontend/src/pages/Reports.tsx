@@ -24,7 +24,7 @@ export function Reports() {
   const [tab, setTab] = useState<Tab>("nativa");
 
   return (
-    <div className="max-w-5xl mx-auto mt-16 p-6">
+    <div className="max-w-5xl mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-bold text-cobalt mb-2">Reportes</h1>
       <p className="text-slate-600 mb-6">
         Analítica de tus importaciones: volumen, tasa de aprobación e incidencias.

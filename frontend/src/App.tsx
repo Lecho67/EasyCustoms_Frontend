@@ -1,15 +1,23 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RequireCompliance } from "@/components/RequireCompliance";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { SessionKickedModal } from "@/components/SessionKickedModal";
 // Pitch es la home ("/" y "/pitch"): se carga eager para que la primera visita
 // no vea un spinner. El resto de las vistas van por ruta con React.lazy.
 import { Pitch } from "@/pages/Pitch";
+
+// Solo lo ve el rol "cliente" (ver Layout) — sacarlo del bundle de entrada
+// evita que agente/gestor/admin y cualquier visitante anónimo lo descarguen.
+const SupportChatWidget = lazy(() =>
+  import("@/components/support/SupportChatWidget").then((m) => ({ default: m.SupportChatWidget }))
+);
 
 const Landing = lazy(() => import("@/pages/Landing").then((m) => ({ default: m.Landing })));
 const Login = lazy(() => import("@/pages/Login").then((m) => ({ default: m.Login })));
@@ -37,20 +45,29 @@ const Reports = lazy(() => import("@/pages/Reports").then((m) => ({ default: m.R
 const NotFound = lazy(() => import("@/pages/NotFound").then((m) => ({ default: m.NotFound })));
 
 function Layout({ children }: { children: React.ReactNode }) {
+  const { profile } = useAuth();
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
       <ToastContainer />
+      <SessionKickedModal />
       <CookieConsentBanner />
+      {/* Solo clientes: "pedir un asesor personal" y "mis consultas" son
+          conceptos de esa relación cliente-asesor, no aplican a roles internos. */}
+      {profile?.role === "cliente" && (
+        <Suspense fallback={null}>
+          <SupportChatWidget />
+        </Suspense>
+      )}
     </div>
   );
 }
 
 function RouteFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-dvh flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-cobalt border-t-transparent rounded-full animate-spin" />
     </div>
   );

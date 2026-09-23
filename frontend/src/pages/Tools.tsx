@@ -8,7 +8,7 @@ export default function Tools() {
   const [activeTab, setActiveTab] = useState<Tab>('tracking');
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-dvh bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         {/* Encabezado */}
         <div className="mb-8 text-center sm:text-left">

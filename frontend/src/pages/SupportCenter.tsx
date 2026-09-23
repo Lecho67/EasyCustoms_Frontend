@@ -28,7 +28,7 @@ export function SupportCenter() {
   }, [resultados]);
 
   return (
-    <div className="max-w-3xl mx-auto mt-16 p-6">
+    <div className="max-w-3xl mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-bold text-cobalt mb-2">Centro de Ayuda</h1>
       <p className="text-slate-600 mb-6">
         Buscá respuestas sobre aduanas, tu casillero y el pago de tributos. Para una evaluación
@@ -46,7 +46,7 @@ export function SupportCenter() {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           placeholder="Buscá una pregunta, por ejemplo: 'tiempos de liberación'"
-          className="w-full rounded-xl border border-slate-300 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent"
+          className="w-full rounded-xl border border-slate-300 pl-9 pr-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent"
         />
       </div>
 
@@ -90,7 +90,7 @@ export function SupportCenter() {
                     <div key={item.id}>
                       <button
                         onClick={() => setAbiertoId(abierto ? null : item.id)}
-                        className="w-full flex items-center justify-between gap-3 p-4 text-left"
+                        className="flex min-h-11 w-full items-center justify-between gap-3 p-4 text-left"
                       >
                         <span className="text-sm font-medium text-slate-800">{item.pregunta}</span>
                         <ChevronDown

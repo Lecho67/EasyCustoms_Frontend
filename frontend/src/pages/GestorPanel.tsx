@@ -5,45 +5,29 @@ import { fetchClientesDelGestor, type ClienteConCartera } from "@/lib/gestorServ
 import { badgeVerdictoClasses, dotVerdictoClasses } from "@/lib/verdictBadge";
 import { Pagination } from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useAsyncData } from "@/hooks/useAsyncData";
 
 // Orden de peor a mejor: en el resumen colapsado se ve primero lo que necesita atención.
 const VEREDICTOS_ORDEN = ["BLOQUEO", "REQUIERE_DOCUMENTACION", "PRECAUCION", "APROBADO"] as const;
 
 export function GestorPanel() {
   const { profile } = useAuth();
-  const [cartera, setCartera] = useState<ClienteConCartera[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
 
   const gestorId = profile?.id;
 
+  const { data: cartera, loading, error } = useAsyncData(
+    () => fetchClientesDelGestor(gestorId as string),
+    [] as ClienteConCartera[],
+    [gestorId],
+    { enabled: !!gestorId, mensajeError: "Error al cargar la cartera" }
+  );
+
+  // Con un solo cliente no tiene sentido un acordeón de 1: lo abre directo.
   useEffect(() => {
-    if (!gestorId) return;
-    let cancelado = false;
-
-    const cargar = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchClientesDelGestor(gestorId);
-        if (cancelado) return;
-        setCartera(data);
-        // Con un solo cliente no tiene sentido un acordeón de 1: lo abre directo.
-        if (data.length === 1) setExpandidos(new Set([data[0].cliente.id]));
-        setError(null);
-      } catch (err) {
-        if (!cancelado) setError(err instanceof Error ? err.message : "Error al cargar la cartera");
-      } finally {
-        if (!cancelado) setLoading(false);
-      }
-    };
-
-    cargar();
-    return () => {
-      cancelado = true;
-    };
-  }, [gestorId]);
+    if (cartera.length === 1) setExpandidos(new Set([cartera[0].cliente.id]));
+  }, [cartera]);
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -66,7 +50,7 @@ export function GestorPanel() {
     });
 
   return (
-    <div className="max-w-4xl mx-auto mt-16 p-6">
+    <div className="max-w-4xl mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-bold text-cobalt mb-1">Mis clientes</h1>
       <p className="text-sm text-slate-500 mb-6">
         {cartera.length} cliente{cartera.length !== 1 && "s"} en tu cartera.
@@ -86,7 +70,7 @@ export function GestorPanel() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Nombre o correo"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-base sm:text-sm"
             />
           </div>
           {busqueda && (

@@ -61,7 +61,7 @@ export function ResetPassword() {
 
   if (checking) {
     return (
-      <div className="max-w-md mx-auto mt-24 p-6 flex items-center justify-center gap-2 text-slate-400">
+      <div className="max-w-md mx-auto mt-16 sm:mt-24 px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-center gap-2 text-slate-400">
         <Loader2 className="w-4 h-4 animate-spin" />
         Verificando enlace...
       </div>
@@ -70,7 +70,7 @@ export function ResetPassword() {
 
   if (!readyForReset) {
     return (
-      <div className="max-w-md mx-auto mt-24 p-6 text-center">
+      <div className="max-w-md mx-auto mt-16 sm:mt-24 px-4 sm:px-6 lg:px-8 py-6 text-center">
         <h1 className="text-2xl font-bold text-cobalt mb-2">Enlace inválido o expirado</h1>
         <p className="text-slate-600 mb-6">
           Este enlace de restablecimiento de contraseña ya no es válido. Solicitá uno nuevo desde tu perfil
@@ -82,7 +82,7 @@ export function ResetPassword() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-24 p-6">
+    <div className="max-w-md mx-auto mt-16 sm:mt-24 px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-2 flex items-center gap-2">
         <KeyRound className="w-5 h-5 text-cobalt" />
         <h1 className="text-2xl font-bold text-cobalt">Restablecer contraseña</h1>

@@ -47,7 +47,7 @@ export function RequireCompliance({ children }: { children: ReactNode }) {
           };
 
     return (
-      <div className="max-w-lg mx-auto mt-24 p-6 text-center">
+      <div className="max-w-lg mx-auto mt-16 sm:mt-24 px-4 sm:px-6 lg:px-8 py-6 text-center">
         <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-amber-500" />
         <h1 className="text-lg font-semibold text-slate-900 mb-2">{motivo.titulo}</h1>
         <p className="text-sm text-slate-500 mb-6">{motivo.detalle}</p>

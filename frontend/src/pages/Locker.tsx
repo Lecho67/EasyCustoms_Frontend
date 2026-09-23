@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, Clock, Copy, Pencil, Trash2 } from "lucide-react";
 import { PreAlertForm } from "../components/PreAlertForm";
 import { fetchMisPreAlertas, eliminarPreAlerta } from "@/lib/preAlertService";
 import { useAuth } from "@/hooks/useAuth";
+import { useAsyncData } from "@/hooks/useAsyncData";
 import type { PreAlert } from "@/types/database.types";
 
 import { Modal } from "@/components/ui/Modal";
@@ -37,27 +38,18 @@ export default function Locker() {
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState<PreAlert | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [preAlertas, setPreAlertas] = useState<PreAlert[]>([]);
   const [eliminando, setEliminando] = useState<PreAlert | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const cargar = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchMisPreAlertas();
-      setPreAlertas(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar pre-alertas");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargar();
-  }, []);
+  const {
+    data: preAlertas,
+    loading,
+    error,
+    reload: cargar,
+    setData: setPreAlertas,
+    setError,
+  } = useAsyncData(fetchMisPreAlertas, [] as PreAlert[], [], {
+    mensajeError: "Error al cargar pre-alertas",
+  });
 
   function handleCopy(addr: LockerAddress) {
     navigator.clipboard.writeText([suite, addr.addressLine, addr.city].filter(Boolean).join(", "));
@@ -82,7 +74,7 @@ export default function Locker() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-cobalt">Mi Casillero</h1>
@@ -96,7 +88,7 @@ export default function Locker() {
             setShowForm(true);
           }}
           disabled={soloLectura}
-          className="bg-cobalt text-white px-5 py-2.5 rounded-lg font-medium
+          className="w-full sm:w-auto bg-cobalt text-white px-5 py-2.5 rounded-lg font-medium
                      hover:bg-cobalt/90 focus:outline-none focus:ring-2
                      focus:ring-cobalt focus:ring-offset-2 transition
                      disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-cobalt"
@@ -168,7 +160,7 @@ export default function Locker() {
             {preAlertas.map((p) => (
               <div key={p.id} className="border border-slate-200 rounded-xl p-4 bg-white shadow-sm flex items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="font-medium text-slate-900">{p.carrier} — {p.tracking_number}</p>
+                  <p className="break-words font-medium text-slate-900">{p.carrier} — {p.tracking_number}</p>
                   <p className="text-sm text-slate-600 truncate">{p.description}</p>
                   <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
                     <span>${p.declared_value.toFixed(2)} USD</span>
@@ -182,14 +174,14 @@ export default function Locker() {
                         setEditando(p);
                         setShowForm(true);
                       }}
-                      className="p-2 text-slate-500 hover:text-cobalt rounded-lg hover:bg-slate-50"
+                      className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-50 hover:text-cobalt"
                       title="Editar"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => solicitarEliminar(p)}
-                      className="p-2 text-slate-500 hover:text-red-600 rounded-lg hover:bg-red-50"
+                      className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600"
                       title="Eliminar"
                     >
                       <Trash2 className="w-4 h-4" />

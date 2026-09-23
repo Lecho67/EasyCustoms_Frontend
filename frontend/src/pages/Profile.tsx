@@ -108,7 +108,7 @@ export function Profile() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-16 mb-16 p-6">
+    <div className="max-w-2xl mx-auto mt-10 sm:mt-16 mb-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-bold text-cobalt mb-1">Mi Perfil</h1>
       <p className="text-slate-600 mb-8">
         Gestioná tus datos de contacto, tu dirección y la seguridad de tu cuenta.

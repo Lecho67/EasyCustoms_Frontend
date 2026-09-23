@@ -128,7 +128,7 @@ export function PowerBiEmbed() {
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             placeholder="https://app.powerbi.com/view?r=..."
-            className="min-w-[16rem] flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent"
+            className="w-full min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-base sm:min-w-[16rem] sm:text-sm focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent"
           />
           <button
             type="submit"
@@ -144,21 +144,21 @@ export function PowerBiEmbed() {
             value={embedUrl}
             onChange={(e) => setEmbedUrl(e.target.value)}
             placeholder="Embed URL"
-            className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-xl border border-slate-300 px-3 py-2 text-base sm:text-sm"
           />
           <input
             type="text"
             value={reportId}
             onChange={(e) => setReportId(e.target.value)}
             placeholder="Report ID"
-            className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-xl border border-slate-300 px-3 py-2 text-base sm:text-sm"
           />
           <input
             type="password"
             value={accessToken}
             onChange={(e) => setAccessToken(e.target.value)}
             placeholder="Access Token"
-            className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-xl border border-slate-300 px-3 py-2 text-base sm:text-sm"
           />
           <button
             type="submit"
@@ -178,7 +178,7 @@ export function PowerBiEmbed() {
       <div
         ref={wrapperRef}
         className={`relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 ${
-          pantallaCompleta ? "h-screen" : "h-[32rem]"
+          pantallaCompleta ? "h-dvh" : "h-[60svh] sm:h-[32rem]"
         }`}
       >
         <button
