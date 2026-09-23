@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { paisesDisponibles, chipsSugeridos } from "@/lib/mockData";
 import { sugerirHsCode } from "@/lib/api";
+import { validateWizardFormData } from "@/lib/shipmentFormSchema";
 import {
   declaracionesEspecialesVacias,
   type WizardFormData,
@@ -40,6 +41,7 @@ import {
   type TransportType,
   type ShipmentModality,
 } from "@/lib/types";
+import type { ErrorKey, FormErrors } from "@/lib/shipmentFormSchema";
 
 /* ============================================================================
  * Catálogos label <-> código.
@@ -182,20 +184,6 @@ function emptyFormData(): WizardFormData {
   };
 }
 
-type ErrorKey =
-  | "paisOrigen"
-  | "transportType"
-  | "shipmentModality"
-  | "descripcionItem"
-  | "pesoKg"
-  | "valorDeclaradoUsd"
-  | "bateriaTipo"
-  | "liquidoCategoria"
-  | "organicoTipo"
-  | "medicoTipo";
-
-type FormErrors = Partial<Record<ErrorKey, string>>;
-
 /** Estado de la sugerencia de HS code en segundo plano (Paso 2 -> Paso 3).
  * "low_confidence" es una respuesta válida del backend (no un error): la
  * clasificación no llegó al umbral mínimo de confianza, así que se muestra
@@ -219,31 +207,7 @@ const STEP_ERROR_KEYS: Record<number, ErrorKey[]> = {
   5: [],
 };
 
-function validate(data: WizardFormData): FormErrors {
-  const errors: FormErrors = {};
-  if (!data.paisOrigen) errors.paisOrigen = "Selecciona un país de origen.";
-  if (!data.transportType) errors.transportType = "Selecciona un tipo de transporte.";
-  if (!data.shipmentModality) errors.shipmentModality = "Selecciona una modalidad de envío.";
-  if (!data.descripcionItem.trim()) errors.descripcionItem = "Describe el producto.";
-  if (data.pesoKg == null || data.pesoKg <= 0) errors.pesoKg = "El peso debe ser mayor a 0.";
-  if (data.valorDeclaradoUsd == null || data.valorDeclaradoUsd < 0)
-    errors.valorDeclaradoUsd = "El valor declarado (USD) es obligatorio.";
-
-  const decl = data.declaracionesEspeciales ?? declaracionesEspecialesVacias();
-  if (decl.contieneBateriaLitio && !decl.bateria?.tipo) {
-    errors.bateriaTipo = "Selecciona el tipo de batería.";
-  }
-  if (decl.contieneLiquidos && !decl.liquido?.categoria) {
-    errors.liquidoCategoria = "Selecciona la categoría del líquido.";
-  }
-  if (decl.esOrganicoOBiologico && !decl.organico?.tipo) {
-    errors.organicoTipo = "Selecciona el tipo de producto.";
-  }
-  if (decl.esMedicamentoRegulado && !decl.medico?.tipo) {
-    errors.medicoTipo = "Selecciona el tipo de regulación.";
-  }
-  return errors;
-}
+const validate = validateWizardFormData;
 
 /* ============================================================================
  * UI helpers
