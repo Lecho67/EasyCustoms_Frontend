@@ -113,7 +113,7 @@ export type HsCodeSuggestionOutcome =
  * (bug ya visto: solo "fallaba" cuando el nivel 1 de Gemini no respondía
  * directo). No bloquea el resto del wizard: la petición corre en segundo
  * plano al pasar del Paso 2 al Paso 3. */
-const HS_SUGGESTION_TIMEOUT_MS = 35_000;
+const HS_SUGGESTION_TIMEOUT_MS = 55_000;
 
 /**
  * Sugerencia de HS code standalone (`POST /api/v1/shipments/hs-code-suggestion`),
