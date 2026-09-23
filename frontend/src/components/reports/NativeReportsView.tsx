@@ -1,43 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Download } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchVolumenMensual, type PuntoVolumenMensual } from "@/lib/reportsService";
 import { fetchClienteIdsDelGestor } from "@/lib/gestorService";
 import { toast } from "@/lib/toast";
+import { useAsyncData } from "@/hooks/useAsyncData";
 
 export function NativeReportsView() {
   const { profile, user } = useAuth();
-  const [datos, setDatos] = useState<PuntoVolumenMensual[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const { data: datos, loading, error } = useAsyncData(
+    async () => {
+      // `enabled` abajo garantiza que profile/user ya están cargados acá.
+      const userIds =
+        profile!.role === "admin" ? undefined : await fetchClienteIdsDelGestor(user!.id);
+      return fetchVolumenMensual(userIds);
+    },
+    [] as PuntoVolumenMensual[],
+    [profile?.role, user?.id],
+    { enabled: !!profile && !!user, mensajeError: "Error al cargar el reporte" }
+  );
 
   useEffect(() => {
-    if (!profile || !user) return;
-    let activo = true;
-    setLoading(true);
-
-    const cargar = async () => {
-      const userIds = profile.role === "admin" ? undefined : await fetchClienteIdsDelGestor(user.id);
-      return fetchVolumenMensual(userIds);
-    };
-
-    cargar()
-      .then((data) => {
-        if (activo) setDatos(data);
-      })
-      .catch((err) => {
-        const msg = err instanceof Error ? err.message : "Error al cargar el reporte";
-        if (activo) setError(msg);
-        toast.error("No se pudo cargar el reporte", msg);
-      })
-      .finally(() => {
-        if (activo) setLoading(false);
-      });
-    return () => {
-      activo = false;
-    };
-  }, [profile?.role, user?.id]);
+    if (error) toast.error("No se pudo cargar el reporte", error);
+  }, [error]);
 
   const exportarCsv = () => {
     if (datos.length === 0) return;

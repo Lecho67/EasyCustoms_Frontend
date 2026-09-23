@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchColaDeRevision, type CasoEnCola } from "@/lib/agentService";
 import { CasoRevisionCard } from "@/components/agent/CasoRevisionCard";
 import { Pagination } from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useAsyncData } from "@/hooks/useAsyncData";
 import type { DiagnosticoEnvio } from "@/lib/types";
 import { badgeVerdictoClasses } from "@/lib/verdictBadge";
 
@@ -27,31 +28,19 @@ function estadoDeCaso(caso: CasoEnCola, currentUserId?: string): { label: string
 
 export function AgentPanel() {
   const { user } = useAuth();
-  const [casos, setCasos] = useState<CasoEnCola[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: casos,
+    loading,
+    error,
+    setData: setCasos,
+  } = useAsyncData(fetchColaDeRevision, [] as CasoEnCola[], [], {
+    mensajeError: "Error al cargar la cola",
+  });
 
   const [filtroPais, setFiltroPais] = useState("todos");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [casoSeleccionadoId, setCasoSeleccionadoId] = useState<string | null>(null);
-
-  const cargarCola = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchColaDeRevision();
-      setCasos(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar la cola");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargarCola();
-  }, []);
 
   const paisesDisponibles = useMemo(() => {
     const set = new Set(casos.map(paisDeCaso).filter((p) => p !== "—"));

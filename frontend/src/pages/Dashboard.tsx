@@ -1,21 +1,14 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { VerdictBadge } from "@/components/verdict/VerdictBadge";
 import { Button } from "@/components/ui/Button";
 import { fetchConsultas } from "@/lib/queryHistoryService";
 import { useAuth } from "@/hooks/useAuth";
+import { useAsyncData } from "@/hooks/useAsyncData";
 import type { DiagnosticoEnvio } from "@/lib/types";
 
 export function Dashboard() {
   const { user, profile } = useAuth();
-  const [consultas, setConsultas] = useState<DiagnosticoEnvio[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchConsultas()
-      .then(setConsultas)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: consultas, loading } = useAsyncData(fetchConsultas, [] as DiagnosticoEnvio[], []);
 
   const recientes = consultas.slice(0, 5);
 

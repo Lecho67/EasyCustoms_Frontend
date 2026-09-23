@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { fetchKycPendientes } from "@/lib/kycReviewService";
 import { KycReviewCard } from "@/components/kyc/KycReviewCard";
 import { Pagination } from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useAsyncData } from "@/hooks/useAsyncData";
 import type { DocumentType, Profile } from "@/types/database.types";
 
 const INTERVALO_REFRESCO_MS = 30_000;
@@ -20,32 +21,23 @@ type Orden = "antiguas" | "recientes";
  * en vez de suscribirnos a `postgres_changes`.
  */
 export function AgentKycPanel() {
-  const [perfiles, setPerfiles] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [busqueda, setBusqueda] = useState("");
   const [tipoDoc, setTipoDoc] = useState<"todos" | DocumentType>("todos");
   const [orden, setOrden] = useState<Orden>("antiguas");
 
-  const cargar = useCallback(async (mostrarSpinner = true) => {
-    if (mostrarSpinner) setLoading(true);
-    try {
-      const data = await fetchKycPendientes();
-      setPerfiles(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar las verificaciones");
-    } finally {
-      if (mostrarSpinner) setLoading(false);
-    }
-  }, []);
+  const {
+    data: perfiles,
+    loading,
+    error,
+    reload: cargar,
+    setData: setPerfiles,
+  } = useAsyncData(fetchKycPendientes, [] as Profile[], [], {
+    mensajeError: "Error al cargar las verificaciones",
+  });
 
   useEffect(() => {
-    cargar();
-
-    const intervalo = setInterval(() => cargar(false), INTERVALO_REFRESCO_MS);
-    const alVolverElFoco = () => cargar(false);
+    const intervalo = setInterval(() => cargar({ silencioso: true }), INTERVALO_REFRESCO_MS);
+    const alVolverElFoco = () => cargar({ silencioso: true });
     window.addEventListener("focus", alVolverElFoco);
 
     return () => {
@@ -91,7 +83,7 @@ export function AgentKycPanel() {
         <h1 className="text-2xl font-bold text-cobalt">Verificación de Identidad (KYC)</h1>
         <button
           type="button"
-          onClick={() => cargar(true)}
+          onClick={() => cargar()}
           className="flex items-center gap-1.5 text-sm font-medium text-cobalt hover:underline"
         >
           <RefreshCw className="h-3.5 w-3.5" />

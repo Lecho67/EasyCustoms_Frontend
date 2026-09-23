@@ -1,39 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchDocumentosPendientes, type DocumentoConCliente } from "@/lib/documentReviewService";
 import { DocumentReviewCard } from "@/components/documents/DocumentReviewCard";
 import { Pagination } from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useAsyncData } from "@/hooks/useAsyncData";
 
 type Asignacion = "todas" | "sin_asignar" | "mias";
 type Orden = "antiguos" | "recientes";
 
 export function AgentDocumentsPanel() {
   const { user } = useAuth();
-  const [docs, setDocs] = useState<DocumentoConCliente[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: docs,
+    loading,
+    error,
+    setData: setDocs,
+  } = useAsyncData(fetchDocumentosPendientes, [] as DocumentoConCliente[], [], {
+    mensajeError: "Error al cargar documentos",
+  });
 
   const [busqueda, setBusqueda] = useState("");
   const [asignacion, setAsignacion] = useState<Asignacion>("todas");
   const [orden, setOrden] = useState<Orden>("antiguos");
-
-  const cargar = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchDocumentosPendientes();
-      setDocs(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar documentos");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargar();
-  }, []);
 
   const handleResuelto = (id: string) => {
     setDocs((prev) => prev.filter((d) => d.id !== id));

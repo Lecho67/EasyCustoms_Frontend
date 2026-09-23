@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Loader2 } from "lucide-react";
 import { Chip } from "@/components/ui/Chip";
@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { VerdictBadge } from "@/components/verdict/VerdictBadge";
 import { fetchConsultas } from "@/lib/queryHistoryService";
+import { useAsyncData } from "@/hooks/useAsyncData";
 import type { DiagnosticoEnvio, NivelVeredicto } from "@/lib/types";
 
 const filtros: { label: string; value: NivelVeredicto | "todos" }[] = [
@@ -16,17 +17,10 @@ const filtros: { label: string; value: NivelVeredicto | "todos" }[] = [
 ];
 
 export function History() {
-  const [consultas, setConsultas] = useState<DiagnosticoEnvio[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: consultas, loading } = useAsyncData(fetchConsultas, [] as DiagnosticoEnvio[], []);
   const [filtro, setFiltro] = useState<NivelVeredicto | "todos">("todos");
   const [busqueda, setBusqueda] = useState("");
   const [seleccionada, setSeleccionada] = useState<DiagnosticoEnvio | null>(null);
-
-  useEffect(() => {
-    fetchConsultas()
-      .then(setConsultas)
-      .finally(() => setLoading(false));
-  }, []);
 
   const filtradas = consultas
     .filter((c) => filtro === "todos" || c.nivel === filtro)

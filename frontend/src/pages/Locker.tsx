@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, Clock, Copy, Pencil, Trash2 } from "lucide-react";
 import { PreAlertForm } from "../components/PreAlertForm";
 import { fetchMisPreAlertas, eliminarPreAlerta } from "@/lib/preAlertService";
 import { useAuth } from "@/hooks/useAuth";
+import { useAsyncData } from "@/hooks/useAsyncData";
 import type { PreAlert } from "@/types/database.types";
 
 import { Modal } from "@/components/ui/Modal";
@@ -37,27 +38,18 @@ export default function Locker() {
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState<PreAlert | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [preAlertas, setPreAlertas] = useState<PreAlert[]>([]);
   const [eliminando, setEliminando] = useState<PreAlert | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const cargar = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchMisPreAlertas();
-      setPreAlertas(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar pre-alertas");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargar();
-  }, []);
+  const {
+    data: preAlertas,
+    loading,
+    error,
+    reload: cargar,
+    setData: setPreAlertas,
+    setError,
+  } = useAsyncData(fetchMisPreAlertas, [] as PreAlert[], [], {
+    mensajeError: "Error al cargar pre-alertas",
+  });
 
   function handleCopy(addr: LockerAddress) {
     navigator.clipboard.writeText([suite, addr.addressLine, addr.city].filter(Boolean).join(", "));

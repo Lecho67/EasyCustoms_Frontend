@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Clock, Upload } from "lucide-react";
 import { DocumentCard } from "../components/DocumentCard";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAsyncData } from "@/hooks/useAsyncData";
 import {
   fetchMisDocumentos,
   subirDocumento,
@@ -17,29 +18,19 @@ export default function Documents() {
   // KYC en revisión: se pueden ver los documentos pero no subir ni eliminar.
   const soloLectura = profile?.kyc_status === "pendiente";
 
-  const [documentos, setDocumentos] = useState<DocumentRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: documentos,
+    loading,
+    error,
+    reload: cargar,
+    setData: setDocumentos,
+    setError,
+  } = useAsyncData(fetchMisDocumentos, [] as DocumentRecord[], [], {
+    mensajeError: "Error al cargar documentos",
+  });
   const [subiendo, setSubiendo] = useState(false);
   const [eliminando, setEliminando] = useState<DocumentRecord | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const cargar = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchMisDocumentos();
-      setDocumentos(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar documentos");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargar();
-  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

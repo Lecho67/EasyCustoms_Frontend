@@ -1,5 +1,5 @@
 // src/components/admin/AdvisorRequestsPanel.tsx
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { UserCheck } from "lucide-react";
 import {
   fetchSolicitudesPendientes,
@@ -7,6 +7,7 @@ import {
   type SolicitudAsesorConCliente,
 } from "@/lib/advisorRequestService";
 import { toast } from "@/lib/toast";
+import { useAsyncData } from "@/hooks/useAsyncData";
 
 /**
  * Cola de "pedir un asesor personal" (disparada desde el chat de ayuda del
@@ -15,26 +16,15 @@ import { toast } from "@/lib/toast";
  * solicitud como atendida una vez que ya asignó a alguien.
  */
 export function AdvisorRequestsPanel() {
-  const [solicitudes, setSolicitudes] = useState<SolicitudAsesorConCliente[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: solicitudes,
+    loading,
+    error,
+    setData: setSolicitudes,
+  } = useAsyncData(fetchSolicitudesPendientes, [] as SolicitudAsesorConCliente[], [], {
+    mensajeError: "Error al cargar las solicitudes",
+  });
   const [atendiendoId, setAtendiendoId] = useState<string | null>(null);
-
-  const cargar = async () => {
-    setLoading(true);
-    try {
-      setSolicitudes(await fetchSolicitudesPendientes());
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar las solicitudes");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargar();
-  }, []);
 
   async function handleMarcarAtendida(s: SolicitudAsesorConCliente) {
     setAtendiendoId(s.id);

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { fetchTodosLosUsuarios, actualizarRol, asignarGestor } from "@/lib/adminService";
 import type { Profile, UserRole } from "@/types/database.types";
 import { toast } from "@/lib/toast";
 import { Pagination } from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { useAsyncData } from "@/hooks/useAsyncData";
 
 const ROLES: UserRole[] = ["cliente", "gestor", "agente", "admin"];
 
@@ -78,29 +79,18 @@ type AccionPendiente =
     };
 
 export function AdminUserTable() {
-  const [usuarios, setUsuarios] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: usuarios,
+    loading,
+    error,
+    setData: setUsuarios,
+    setError,
+  } = useAsyncData(fetchTodosLosUsuarios, [] as Profile[], [], {
+    mensajeError: "Error al cargar usuarios",
+  });
   const [guardandoId, setGuardandoId] = useState<string | null>(null);
   const [accionPendiente, setAccionPendiente] = useState<AccionPendiente | null>(null);
   const [busqueda, setBusqueda] = useState("");
-
-  const cargar = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchTodosLosUsuarios();
-      setUsuarios(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar usuarios");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargar();
-  }, []);
 
   const gestores = usuarios.filter((u) => u.role === "gestor");
 
