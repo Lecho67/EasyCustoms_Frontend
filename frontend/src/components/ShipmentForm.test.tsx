@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ShipmentForm } from "./ShipmentForm";
 import { sugerirHsCode } from "@/lib/api";
@@ -40,7 +40,6 @@ async function completarLogisticaYProducto(user: ReturnType<typeof userEvent.set
   await elegirSelect(user, "Selecciona una opción", "Envío personal / regalo");
   await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
-  await elegirSelect(user, "Selecciona un país", "Colombia");
   await user.type(
     screen.getByPlaceholderText("Ej. Audífonos inalámbricos con estuche de carga"),
     "Camiseta de algodón"
@@ -52,18 +51,17 @@ async function completarLogisticaYProducto(user: ReturnType<typeof userEvent.set
   await user.click(screen.getByRole("button", { name: "Siguiente" }));
 }
 
-/** Avanza del paso 4 (batería) hasta el paso 8 respondiendo "No" en cada
- * pregunta Sí/No — deja el wizard parado en el último paso. */
+/** Desde el paso 4 (las 4 declaraciones especiales, todas en "No" por
+ * default) avanza al paso 5 — como ya no son pasos separados, alcanza con
+ * un solo "Siguiente" para llegar al último paso. */
 async function responderNoHastaElFinal(user: ReturnType<typeof userEvent.setup>) {
-  for (let i = 0; i < 4; i++) {
-    await user.click(screen.getByRole("button", { name: "Siguiente" }));
-  }
+  await user.click(screen.getByRole("button", { name: "Siguiente" }));
 }
 
 describe("ShipmentForm — navegación por pasos", () => {
-  it("arranca en el paso 1 de 8 y no muestra el botón Anterior", () => {
+  it("arranca en el paso 1 de 5 y no muestra el botón Anterior", () => {
     setup();
-    expect(screen.getByText("Paso 1 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 1 de 5")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Anterior" })).not.toBeInTheDocument();
   });
 
@@ -73,7 +71,7 @@ describe("ShipmentForm — navegación por pasos", () => {
 
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
-    expect(screen.getByText("Paso 1 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 1 de 5")).toBeInTheDocument();
     expect(screen.getByText("Selecciona un país de origen.")).toBeInTheDocument();
     expect(screen.getByText("Selecciona un tipo de transporte.")).toBeInTheDocument();
     expect(screen.getByText("Selecciona una modalidad de envío.")).toBeInTheDocument();
@@ -89,7 +87,7 @@ describe("ShipmentForm — navegación por pasos", () => {
     await elegirSelect(user, "Selecciona una opción", "Envío personal / regalo");
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
-    expect(screen.getByText("Paso 2 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 2 de 5")).toBeInTheDocument();
     expect(screen.queryByText("Selecciona un país de destino.")).not.toBeInTheDocument();
     expect(screen.queryByText("Describe el producto.")).not.toBeInTheDocument();
   });
@@ -103,7 +101,7 @@ describe("ShipmentForm — navegación por pasos", () => {
     await completarLogisticaYProducto(user);
     await responderNoHastaElFinal(user);
 
-    expect(screen.getByText("Paso 8 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 5 de 5")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /evaluar envío/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Siguiente" })).not.toBeInTheDocument();
   });
@@ -119,7 +117,7 @@ describe("ShipmentForm — navegación por pasos", () => {
 
     await user.click(screen.getByRole("button", { name: "Electrónica" }));
     await user.click(screen.getByRole("button", { name: "Anterior" }));
-    expect(screen.getByText("Paso 1 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 1 de 5")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
     expect(screen.getByPlaceholderText("Ej. Electrónica")).toHaveValue("Electrónica");
@@ -178,20 +176,47 @@ describe("ShipmentForm — declaraciones especiales por paso", () => {
 
     await completarLogisticaYProducto(user);
 
-    expect(screen.getByText("Paso 4 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 4 de 5")).toBeInTheDocument();
     expect(screen.queryByText("Tipo de batería")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Sí" }));
+    // Las 4 declaraciones especiales conviven en el mismo paso, así que hay
+    // 4 pares de botones "Sí"/"No" en pantalla — se acota al grupo de
+    // baterías por su aria-label (ver YesNoToggle/DeclarationBlock).
+    const grupoBateria = screen.getByRole("group", {
+      name: "¿Tu envío contiene baterías de litio?",
+    });
+    await user.click(within(grupoBateria).getByRole("button", { name: "Sí" }));
     expect(screen.getByText("Tipo de batería")).toBeInTheDocument();
 
     // Sin elegir el tipo, "Siguiente" debe quedarse en el paso 4.
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
-    expect(screen.getByText("Paso 4 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 4 de 5")).toBeInTheDocument();
     expect(screen.getByText("Selecciona el tipo de batería.")).toBeInTheDocument();
 
     await elegirSelect(user, "Selecciona un tipo", "Litio-ion");
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
-    expect(screen.getByText("Paso 5 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 5 de 5")).toBeInTheDocument();
+  });
+
+  it("las 4 declaraciones especiales viven en el mismo paso", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await completarLogisticaYProducto(user);
+
+    expect(screen.getByText("Paso 4 de 5")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "¿Tu envío contiene baterías de litio?" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "¿Contiene líquidos, geles o aerosoles?" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "¿Es un producto orgánico o biológico?" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "¿Es un medicamento o producto médicamente regulado?" })
+    ).toBeInTheDocument();
   });
 
   it("responder 'No' no exige sub-campos y avanza directo", async () => {
@@ -199,14 +224,17 @@ describe("ShipmentForm — declaraciones especiales por paso", () => {
     setup();
 
     await completarLogisticaYProducto(user);
-    await user.click(screen.getByRole("button", { name: "No" }));
+    const grupoBateria = screen.getByRole("group", {
+      name: "¿Tu envío contiene baterías de litio?",
+    });
+    await user.click(within(grupoBateria).getByRole("button", { name: "No" }));
     await user.click(screen.getByRole("button", { name: "Siguiente" }));
 
-    expect(screen.getByText("Paso 5 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 5 de 5")).toBeInTheDocument();
   });
 });
 
-describe("ShipmentForm — paso 8 (otras mercancías peligrosas)", () => {
+describe("ShipmentForm — paso 5 (otras mercancías peligrosas)", () => {
   it("sigue permitiendo selección múltiple sin pregunta Sí/No", async () => {
     const user = userEvent.setup();
     setup();
@@ -214,7 +242,7 @@ describe("ShipmentForm — paso 8 (otras mercancías peligrosas)", () => {
     await completarLogisticaYProducto(user);
     await responderNoHastaElFinal(user);
 
-    expect(screen.getByText("Paso 8 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 5 de 5")).toBeInTheDocument();
     const gasComprimido = screen.getByLabelText("Gas comprimido");
     await user.click(gasComprimido);
     expect(gasComprimido).toBeChecked();
@@ -234,7 +262,6 @@ describe("ShipmentForm — sugerencia de HS code (Paso 2 -> Paso 3)", () => {
     setup();
 
     await llegarAPaso2(user);
-    await elegirSelect(user, "Selecciona un país", "Colombia");
     await user.click(screen.getByRole("button", { name: "Electrónica" }));
     await user.type(
       screen.getByPlaceholderText("Ej. Audífonos inalámbricos con estuche de carga"),
@@ -244,7 +271,7 @@ describe("ShipmentForm — sugerencia de HS code (Paso 2 -> Paso 3)", () => {
 
     // El avance a Paso 3 no espera la promesa (sugerirHsCode nunca se resuelve
     // sincrónicamente) — si esto pasa, es porque no se bloqueó la navegación.
-    expect(screen.getByText("Paso 3 de 8")).toBeInTheDocument();
+    expect(screen.getByText("Paso 3 de 5")).toBeInTheDocument();
     expect(sugerirHsCodeMock).toHaveBeenCalledWith("audífonos inalámbricos", "Electrónica");
   });
 
@@ -259,7 +286,6 @@ describe("ShipmentForm — sugerencia de HS code (Paso 2 -> Paso 3)", () => {
     setup();
 
     await llegarAPaso2(user);
-    await elegirSelect(user, "Selecciona un país", "Colombia");
     await user.type(
       screen.getByPlaceholderText("Ej. Audífonos inalámbricos con estuche de carga"),
       "cargador USB-C"
@@ -291,7 +317,6 @@ describe("ShipmentForm — sugerencia de HS code (Paso 2 -> Paso 3)", () => {
     // Primer paso por el wizard: sin sugerencia, el usuario escribe su
     // propio código en el Paso 3.
     await llegarAPaso2(user);
-    await elegirSelect(user, "Selecciona un país", "Colombia");
     await user.type(
       screen.getByPlaceholderText("Ej. Audífonos inalámbricos con estuche de carga"),
       "producto genérico"
@@ -329,7 +354,6 @@ describe("ShipmentForm — sugerencia de HS code (Paso 2 -> Paso 3)", () => {
     setup();
 
     await llegarAPaso2(user);
-    await elegirSelect(user, "Selecciona un país", "Colombia");
     await user.type(
       screen.getByPlaceholderText("Ej. Audífonos inalámbricos con estuche de carga"),
       "producto sin cambios"
@@ -349,7 +373,6 @@ describe("ShipmentForm — sugerencia de HS code (Paso 2 -> Paso 3)", () => {
     setup();
 
     await llegarAPaso2(user);
-    await elegirSelect(user, "Selecciona un país", "Colombia");
     await user.type(
       screen.getByPlaceholderText("Ej. Audífonos inalámbricos con estuche de carga"),
       "asdasdasd"

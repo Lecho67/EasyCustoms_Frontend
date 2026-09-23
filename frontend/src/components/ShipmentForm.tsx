@@ -142,27 +142,16 @@ function EnumSelect<T extends string>({
  * Wizard: pasos, metadata y mapeo de errores por paso
  * ==========================================================================*/
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 5;
 
 const STEP_META: { title: string; description: string }[] = [
   { title: "Logística", description: "Origen, transporte y modalidad del envío" },
   { title: "Destino y producto", description: "¿A dónde va el envío y qué contiene?" },
   { title: "Detalles del envío", description: "Peso, valor y cantidad declarados" },
   {
-    title: "¿Tu envío contiene baterías de litio?",
-    description: "Incluye power banks, equipos con batería recargable integrada y baterías sueltas.",
-  },
-  {
-    title: "¿Contiene líquidos, geles o aerosoles?",
-    description: "Cosméticos, perfumes, productos de limpieza o líquidos alimenticios.",
-  },
-  {
-    title: "¿Es un producto orgánico o biológico?",
-    description: "Alimentos, plantas, semillas o productos de origen animal o vegetal.",
-  },
-  {
-    title: "¿Es un medicamento o producto médicamente regulado?",
-    description: "Medicamentos, dispositivos médicos o sustancias controladas.",
+    title: "Declaraciones especiales",
+    description:
+      "Marca las que apliquen a tu envío — los campos adicionales de cada una se abren solo si respondes 'Sí'.",
   },
   {
     title: "Otras mercancías peligrosas",
@@ -179,7 +168,10 @@ function emptyFormData(): WizardFormData {
     paisOrigen: "",
     transportType: "",
     shipmentModality: "",
-    paisDestino: "",
+    // Fijo: el producto solo evalúa importaciones hacia Colombia. Antes era
+    // un <Select> con 8 países (incluyendo Colombia como una opción más),
+    // lo que permitía evaluar por error un envío a otro país.
+    paisDestino: "Colombia",
     categoria: "",
     descripcionItem: "",
     pesoKg: undefined,
@@ -194,7 +186,6 @@ type ErrorKey =
   | "paisOrigen"
   | "transportType"
   | "shipmentModality"
-  | "paisDestino"
   | "descripcionItem"
   | "pesoKg"
   | "valorDeclaradoUsd"
@@ -222,13 +213,10 @@ type HsSuggestionState =
  * inválido si "Evaluar envío" se dispara con algo roto. */
 const STEP_ERROR_KEYS: Record<number, ErrorKey[]> = {
   1: ["paisOrigen", "transportType", "shipmentModality"],
-  2: ["paisDestino", "descripcionItem"],
+  2: ["descripcionItem"],
   3: ["pesoKg", "valorDeclaradoUsd"],
-  4: ["bateriaTipo"],
-  5: ["liquidoCategoria"],
-  6: ["organicoTipo"],
-  7: ["medicoTipo"],
-  8: [],
+  4: ["bateriaTipo", "liquidoCategoria", "organicoTipo", "medicoTipo"],
+  5: [],
 };
 
 function validate(data: WizardFormData): FormErrors {
@@ -236,7 +224,6 @@ function validate(data: WizardFormData): FormErrors {
   if (!data.paisOrigen) errors.paisOrigen = "Selecciona un país de origen.";
   if (!data.transportType) errors.transportType = "Selecciona un tipo de transporte.";
   if (!data.shipmentModality) errors.shipmentModality = "Selecciona una modalidad de envío.";
-  if (!data.paisDestino) errors.paisDestino = "Selecciona un país de destino.";
   if (!data.descripcionItem.trim()) errors.descripcionItem = "Describe el producto.";
   if (data.pesoKg == null || data.pesoKg <= 0) errors.pesoKg = "El peso debe ser mayor a 0.";
   if (data.valorDeclaradoUsd == null || data.valorDeclaradoUsd < 0)
@@ -296,8 +283,9 @@ const StepProgress: React.FC<{ step: number }> = ({ step }) => (
 const YesNoToggle: React.FC<{
   value: boolean;
   onChange: (value: boolean) => void;
-}> = ({ value, onChange }) => (
-  <div className="flex gap-3" role="group">
+  ariaLabel?: string;
+}> = ({ value, onChange, ariaLabel }) => (
+  <div className="flex gap-3" role="group" aria-label={ariaLabel}>
     <button
       type="button"
       aria-pressed={value}
@@ -328,6 +316,30 @@ const YesNoToggle: React.FC<{
 const SubfieldsGrid: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-6 border-l-2 border-cobalt/20">
     {children}
+  </div>
+);
+
+/**
+ * Cada declaración especial (batería, líquidos, orgánico, médico) vivía en
+ * su propio paso del wizard — 4 pantallas de un Sí/No cada una, la mayoría
+ * de las veces respondidas "No". Ahora las 4 comparten un solo paso; este
+ * wrapper agrupa el título, la pista y el toggle, y solo revela sus
+ * children (los sub-campos) cuando la respuesta es "Sí". `ariaLabel` en
+ * YesNoToggle distingue los 4 grupos de botones "Sí"/"No" idénticos que
+ * ahora conviven en la misma pantalla.
+ */
+const DeclarationBlock: React.FC<{
+  title: string;
+  hint: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+  children?: React.ReactNode;
+}> = ({ title, hint, value, onChange, children }) => (
+  <div className="border-t border-slate-100 pt-5 first:border-t-0 first:pt-0">
+    <p className="text-sm font-medium text-slate-800">{title}</p>
+    <p className="text-xs text-slate-500 mb-2">{hint}</p>
+    <YesNoToggle value={value} onChange={onChange} ariaLabel={title} />
+    {value && children}
   </div>
 );
 
@@ -522,16 +534,11 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
       {step === 2 && (
         <SectionCard title={meta.title} description={meta.description}>
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">
-              País de destino <span className="text-red-500">*</span>
-            </label>
-            <Select
-              options={paisesDisponibles}
-              value={form.paisDestino}
-              onChange={(paisDestino) => update({ paisDestino })}
-              placeholder="Selecciona un país"
-            />
-            {errors.paisDestino && <p className="text-xs text-red-600 mt-1">{errors.paisDestino}</p>}
+            <label className="text-xs font-medium text-slate-500 mb-1 block">País de destino</label>
+            <Input value="Colombia" disabled />
+            <p className="text-xs text-slate-400 mt-1">
+              Por ahora Easy CUSTOMS solo evalúa importaciones hacia Colombia.
+            </p>
           </div>
 
           <div>
@@ -651,11 +658,12 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
 
       {step === 4 && (
         <SectionCard title={meta.title} description={meta.description}>
-          <YesNoToggle
+          <DeclarationBlock
+            title="¿Tu envío contiene baterías de litio?"
+            hint="Incluye power banks, equipos con batería recargable integrada y baterías sueltas."
             value={decl.contieneBateriaLitio}
             onChange={(contieneBateriaLitio) => updateDecl({ contieneBateriaLitio })}
-          />
-          {decl.contieneBateriaLitio && (
+          >
             <SubfieldsGrid>
               <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">
@@ -714,17 +722,14 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 }
               />
             </SubfieldsGrid>
-          )}
-        </SectionCard>
-      )}
+          </DeclarationBlock>
 
-      {step === 5 && (
-        <SectionCard title={meta.title} description={meta.description}>
-          <YesNoToggle
+          <DeclarationBlock
+            title="¿Contiene líquidos, geles o aerosoles?"
+            hint="Cosméticos, perfumes, productos de limpieza o líquidos alimenticios."
             value={decl.contieneLiquidos}
             onChange={(contieneLiquidos) => updateDecl({ contieneLiquidos })}
-          />
-          {decl.contieneLiquidos && (
+          >
             <SubfieldsGrid>
               <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">
@@ -766,17 +771,14 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 />
               </div>
             </SubfieldsGrid>
-          )}
-        </SectionCard>
-      )}
+          </DeclarationBlock>
 
-      {step === 6 && (
-        <SectionCard title={meta.title} description={meta.description}>
-          <YesNoToggle
+          <DeclarationBlock
+            title="¿Es un producto orgánico o biológico?"
+            hint="Alimentos, plantas, semillas o productos de origen animal o vegetal."
             value={decl.esOrganicoOBiologico}
             onChange={(esOrganicoOBiologico) => updateDecl({ esOrganicoOBiologico })}
-          />
-          {decl.esOrganicoOBiologico && (
+          >
             <SubfieldsGrid>
               <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">
@@ -816,17 +818,14 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 />
               </div>
             </SubfieldsGrid>
-          )}
-        </SectionCard>
-      )}
+          </DeclarationBlock>
 
-      {step === 7 && (
-        <SectionCard title={meta.title} description={meta.description}>
-          <YesNoToggle
+          <DeclarationBlock
+            title="¿Es un medicamento o producto médicamente regulado?"
+            hint="Medicamentos, dispositivos médicos o sustancias controladas."
             value={decl.esMedicamentoRegulado}
             onChange={(esMedicamentoRegulado) => updateDecl({ esMedicamentoRegulado })}
-          />
-          {decl.esMedicamentoRegulado && (
+          >
             <SubfieldsGrid>
               <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">
@@ -854,11 +853,11 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                 />
               </div>
             </SubfieldsGrid>
-          )}
+          </DeclarationBlock>
         </SectionCard>
       )}
 
-      {step === 8 && (
+      {step === 5 && (
         <SectionCard title={meta.title} description={meta.description}>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {OTHER_DANGEROUS_GOODS_OPTIONS.map((opt) => (
