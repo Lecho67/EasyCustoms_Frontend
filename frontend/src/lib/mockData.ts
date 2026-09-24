@@ -37,14 +37,22 @@ export function evaluarEnvioMock(data: WizardFormData): DiagnosticoEnvio {
     createdAt: new Date().toISOString(),
     partidaArancelariaTentativa,
     desgloseImpuestos,
-    input: { ...data },
+    // El mock nunca tuvo noción de tope de minimis — mejor no mostrar nada
+    // que inventar una cifra. Lo real viene de tax_estimation del backend
+    // (ver mapDecisionResultToDiagnostico en shipmentMapping.ts).
+    deMinimis: null,
+    input: {
+      ...data,
+      transportType: data.transportType || undefined,
+      shipmentModality: data.shipmentModality || undefined,
+    },
   };
 
   if (/(perfume|colonia|aerosol|encendedor|explosivo|arma)/.test(texto)) {
     return {
       ...base,
       nivel: "rojo",
-      titulo: "Envío bloqueado / prohibido",
+      titulo: "Este envío no se puede hacer así",
       resumen: `Este ítem no puede transportarse por vía aérea hacia ${data.paisDestino}.`,
       justificacion:
         "Según la normativa IATA vigente sobre mercancías peligrosas (Dangerous Goods Regulations), los líquidos inflamables y aerosoles con alcohol por encima de cierto umbral no pueden transportarse en bodega de carga aérea comercial sin certificación especial de la aerolínea.",
@@ -61,7 +69,7 @@ export function evaluarEnvioMock(data: WizardFormData): DiagnosticoEnvio {
     return {
       ...base,
       nivel: "amarillo",
-      titulo: "Requiere documentación adicional",
+      titulo: "Puedes enviarlo, pero falta un documento",
       resumen: "El envío es viable, pero necesitas presentar documentación específica antes de despacharlo.",
       justificacion:
         "Los dispositivos con baterías de litio requieren una ficha de seguridad (MSDS) y una declaración de mercancía peligrosa limitada, según el peso Watt-hora declarado del componente.",
@@ -80,7 +88,7 @@ export function evaluarEnvioMock(data: WizardFormData): DiagnosticoEnvio {
   return {
     ...base,
     nivel: "verde",
-    titulo: "Apto para envío",
+    titulo: "Tu envío puede pasar sin problema",
     resumen: `Tu envío cumple con la normativa de transporte aéreo hacia ${data.paisDestino}.`,
     justificacion:
       "El ítem descrito no figura en las listas de restricciones ni de mercancías peligrosas para transporte aéreo comercial. Se recomienda un empaque estándar acorde al valor declarado.",

@@ -5,7 +5,8 @@ import { test, expect, type Page } from "@playwright/test";
  *
  * El motor de reglas está forzado al mock (`evaluarEnvioMock`) vía
  * `webServer.env` en `playwright.config.ts`, así que el resultado es
- * determinístico: una descripción de ropa cae en "Apto para envío" (verde).
+ * determinístico: una descripción de ropa cae en "Tu envío puede pasar sin
+ * problema" (verde).
  *
  * El mock NO escribe en `customs_queries` (solo el backend real lo hace), así
  * que este flujo no deja filas y no necesita teardown. La parte
@@ -18,7 +19,7 @@ test.use({ storageState: "e2e/.auth/cliente.json" });
 async function elegirSelect(page: Page, triggerActual: string | RegExp, opcion: string) {
   await page.getByRole("button", { name: triggerActual }).first().click();
   await page.getByPlaceholder("Buscar...").fill(opcion);
-  await page.getByRole("button", { name: opcion, exact: true }).click();
+  await page.getByRole("option", { name: opcion, exact: true }).click();
 }
 
 async function siguiente(page: Page) {
@@ -46,13 +47,13 @@ test("el wizard de envío llega a un veredicto", async ({ page }) => {
   await expect(page.locator("form")).toBeVisible();
 
   // Paso 1 — Logística
-  await elegirSelect(page, "Selecciona un país", "Estados Unidos");
-  await elegirSelect(page, "Selecciona una opción", "Aéreo");
-  await elegirSelect(page, "Selecciona una opción", "Envío personal / regalo");
+  await elegirSelect(page, "País de origen", "Estados Unidos");
+  await elegirSelect(page, "Tipo de transporte", "Aéreo");
+  await elegirSelect(page, "Modalidad de envío", "Envío personal / regalo");
   await siguiente(page);
 
-  // Paso 2 — Destino y producto
-  await elegirSelect(page, "Selecciona un país", "Colombia");
+  // Paso 2 — Destino y producto (el país de destino está fijo en Colombia,
+  // ya no es un select)
   await page
     .getByPlaceholder("Ej. Audífonos inalámbricos con estuche de carga")
     .fill("Camiseta de algodón, regalo personal");
@@ -70,7 +71,7 @@ test("el wizard de envío llega a un veredicto", async ({ page }) => {
 
   // El mock demora ~3s y navega a /consulta/:id
   await page.waitForURL(/\/consulta\/[0-9a-f-]{36}$/, { timeout: 15_000 });
-  await expect(page.getByText("Apto para envío")).toBeVisible();
+  await expect(page.getByText("Tu envío puede pasar sin problema")).toBeVisible();
   await expect(page.getByText("Guardado en tu historial")).toBeVisible();
   await expect(page.getByRole("button", { name: /Ver historial/ })).toBeVisible();
 
@@ -84,12 +85,11 @@ test("una descripción con batería de litio pide documentación (veredicto ámb
 
   await page.goto("/consulta/nueva");
 
-  await elegirSelect(page, "Selecciona un país", "México");
-  await elegirSelect(page, "Selecciona una opción", "Aéreo");
-  await elegirSelect(page, "Selecciona una opción", "Envío comercial");
+  await elegirSelect(page, "País de origen", "México");
+  await elegirSelect(page, "Tipo de transporte", "Aéreo");
+  await elegirSelect(page, "Modalidad de envío", "Envío comercial");
   await siguiente(page);
 
-  await elegirSelect(page, "Selecciona un país", "Chile");
   await page
     .getByPlaceholder("Ej. Audífonos inalámbricos con estuche de carga")
     .fill("Power bank con batería de litio de 20000 mAh");
@@ -104,5 +104,5 @@ test("una descripción con batería de litio pide documentación (veredicto ámb
   await page.getByRole("button", { name: "Evaluar envío" }).click();
 
   await page.waitForURL(/\/consulta\/[0-9a-f-]{36}$/, { timeout: 15_000 });
-  await expect(page.getByText("Requiere documentación adicional")).toBeVisible();
+  await expect(page.getByText("Puedes enviarlo, pero falta un documento")).toBeVisible();
 });

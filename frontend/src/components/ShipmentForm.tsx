@@ -706,6 +706,10 @@ export function ShipmentForm({ onSubmit, isSubmitting, esperaSegundos = 0 }: Shi
                   })
                 }
               />
+              <p className="sm:col-span-2 text-xs text-slate-400">
+                Estos datos están en la etiqueta de la batería o en la ficha técnica del
+                producto — no hace falta que los calcules.
+              </p>
             </SubfieldsGrid>
           )}
         </SectionCard>

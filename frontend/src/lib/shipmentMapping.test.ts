@@ -99,7 +99,7 @@ describe("mapDecisionResultToDiagnostico", () => {
   it("traduce APROBADO a nivel verde con título apto", () => {
     const d = mapDecisionResultToDiagnostico("req-1", request, result(), baseWizard());
     expect(d.nivel).toBe("verde");
-    expect(d.titulo).toBe("Apto para envío");
+    expect(d.titulo).toBe("Tu envío puede pasar sin problema");
     expect(d.resumen).toContain("Colombia");
   });
 
@@ -144,6 +144,52 @@ describe("mapDecisionResultToDiagnostico", () => {
       baseWizard({ valorDeclaradoUsd: 0 })
     );
     expect(d.desgloseImpuestos).toBeNull();
+  });
+
+  it("mapea el tope de minimis cuando el motor lo informa", () => {
+    const superado = mapDecisionResultToDiagnostico(
+      "req-6",
+      request,
+      result({
+        tax_estimation: {
+          requires_taxes: true,
+          de_minimis_threshold_exceeded: true,
+          de_minimis_threshold_value: 200,
+        },
+      }),
+      baseWizard()
+    );
+    expect(superado.deMinimis).toEqual({ superado: true, valorTope: 200 });
+
+    const dentroDelTope = mapDecisionResultToDiagnostico(
+      "req-7",
+      request,
+      result({
+        tax_estimation: {
+          requires_taxes: false,
+          de_minimis_threshold_exceeded: false,
+          de_minimis_threshold_value: 200,
+        },
+      }),
+      baseWizard()
+    );
+    expect(dentroDelTope.deMinimis).toEqual({ superado: false, valorTope: 200 });
+  });
+
+  it("deMinimis queda en null si el motor no informa el dato (no inventa nada)", () => {
+    const d = mapDecisionResultToDiagnostico("req-8", request, result(), baseWizard());
+    expect(d.deMinimis).toBeNull();
+  });
+
+  it("le devuelve al usuario el transporte y la modalidad que declaró", () => {
+    const d = mapDecisionResultToDiagnostico(
+      "req-9",
+      request,
+      result(),
+      baseWizard({ transportType: "air", shipmentModality: "personal_shipment_gift" })
+    );
+    expect(d.input.transportType).toBe("air");
+    expect(d.input.shipmentModality).toBe("personal_shipment_gift");
   });
 
   it("infiere documentos requeridos a partir del texto de las alertas", () => {

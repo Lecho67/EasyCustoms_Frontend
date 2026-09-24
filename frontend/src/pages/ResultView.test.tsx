@@ -45,6 +45,7 @@ describe("ResultView", () => {
 
     expect(screen.getByText("verdict-card")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByText(/no una liquidación oficial de la DIAN/i)).toBeInTheDocument();
   });
 
   it("busca por id cuando no está en el store y la renderiza", async () => {

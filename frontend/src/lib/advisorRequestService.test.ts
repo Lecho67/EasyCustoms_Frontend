@@ -63,7 +63,7 @@ describe("crearSolicitudAsesor", () => {
       createQueryBuilderMock({ data: null, error: { code: "23505", message: "duplicate key" } }) as never
     );
 
-    await expect(crearSolicitudAsesor()).rejects.toThrow("Ya tenés una solicitud de asesor pendiente.");
+    await expect(crearSolicitudAsesor()).rejects.toThrow("Ya tienes una solicitud de asesor pendiente.");
   });
 
   it("propaga cualquier otro error de Supabase", async () => {

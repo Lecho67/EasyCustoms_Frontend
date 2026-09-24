@@ -36,7 +36,9 @@ export function Dashboard() {
       {loading ? (
         <p className="text-sm text-slate-400">Cargando...</p>
       ) : recientes.length === 0 ? (
-        <p className="text-sm text-slate-400">Aún no tienes consultas.</p>
+        <p className="text-sm text-slate-400">
+          Aún no tienes consultas. Crea la primera para saber si tu envío cumple con la normativa.
+        </p>
       ) : (
         <div className="space-y-2">
           {recientes.map((c) => (

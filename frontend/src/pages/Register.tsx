@@ -50,7 +50,7 @@ export function Register() {
     <div className="max-w-md mx-auto mt-10 sm:mt-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="mb-1 text-2xl font-bold text-cobalt">Crear cuenta</h1>
       <p className="mb-6 text-sm text-slate-500">
-        Creá tu cuenta para empezar a importar con Easy CUSTOMS.
+        Crea tu cuenta para empezar a importar con Easy CUSTOMS.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -98,7 +98,7 @@ export function Register() {
       </form>
 
       <p className="mt-6 text-center text-sm text-slate-500">
-        ¿Ya tenés cuenta?{' '}
+        ¿Ya tienes cuenta?{' '}
         <Link to="/login" className="font-medium text-cobalt hover:underline">
           Iniciar sesión
         </Link>

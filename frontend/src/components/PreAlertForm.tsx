@@ -49,7 +49,11 @@ export function PreAlertForm({ onClose, onSaved, preAlertaExistente }: PreAlertF
       onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar la pre-alerta");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "No se pudo guardar la pre-alerta. Revisa los datos e inténtalo de nuevo."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -57,9 +61,14 @@ export function PreAlertForm({ onClose, onSaved, preAlertaExistente }: PreAlertF
 
   return (
     <Modal open onClose={onClose}>
-      <h3 className="text-lg font-semibold text-slate-900 mb-4 pr-6">
+      <h3 className={`text-lg font-semibold text-slate-900 pr-6 ${esEdicion ? "mb-4" : "mb-1"}`}>
         {esEdicion ? "Editar pre-alerta" : "Pre-alertar paquete"}
       </h3>
+      {!esEdicion && (
+        <p className="text-xs text-slate-500 mb-4">
+          Avísale a tu casillero que este paquete viene en camino, antes de que llegue.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <p className="text-red-500 text-sm">{error}</p>}

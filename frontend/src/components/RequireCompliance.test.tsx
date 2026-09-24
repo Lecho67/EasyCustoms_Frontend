@@ -70,7 +70,7 @@ describe("RequireCompliance", () => {
     renderWith(fakeProfile({ kyc_status: "no_iniciado" }));
     expect(screen.queryByText("CONTENIDO CASILLERO")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /verificá tu identidad/i })
+      screen.getByRole("heading", { name: /verifica tu identidad/i })
     ).toBeInTheDocument();
   });
 

@@ -153,7 +153,7 @@ export default function Locker() {
           <p className="text-sm text-slate-400">Cargando...</p>
         ) : preAlertas.length === 0 ? (
           <div className="border border-dashed border-slate-300 rounded-xl p-8 text-center text-slate-500 text-sm">
-            Aún no tienes paquetes pre-alertados. Usa el botón "Pre-alertar paquete" para que la IA escanee tu factura antes de que llegue a bodega.
+            Aún no tienes paquetes pre-alertados. Usa el botón "Pre-alertar paquete" para que la IA escanee tu factura antes de que tu paquete llegue a la bodega (el depósito en el extranjero que recibe tus compras).
           </div>
         ) : (
           <div className="space-y-3">

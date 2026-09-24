@@ -66,12 +66,30 @@ export function History() {
         </div>
       ) : filtradas.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-slate-400 mb-4">
-            {consultas.length === 0 ? "Aún no tienes consultas." : "No hay resultados con ese filtro o búsqueda."}
-          </p>
-          <Link to="/consulta/nueva" className="text-cobalt font-medium">
-            Hacer una nueva consulta →
-          </Link>
+          {consultas.length === 0 ? (
+            <>
+              <p className="text-slate-400 mb-4">Aún no tienes consultas.</p>
+              <Link to="/consulta/nueva" className="text-cobalt font-medium">
+                Hacer una nueva consulta →
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="text-slate-400 mb-4">
+                No hay resultados con ese filtro o búsqueda. Prueba con otros términos o borra el filtro.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setFiltro("todos");
+                  setBusqueda("");
+                }}
+                className="text-cobalt font-medium"
+              >
+                Borrar filtro y búsqueda
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-2">

@@ -7,6 +7,15 @@ export interface DesgloseImpuestos {
   tasaArancelAplicada: number;
 }
 
+/** El motor de reglas sí calcula esto (`tax_estimation.de_minimis_threshold_*`
+ * en DecisionEngineResult) pero hasta ahora se descartaba en el mapeo —
+ * nunca llegaba a la UI. Es la pregunta más básica de un importador:
+ * "¿mi envío queda libre de impuestos o no, y hasta cuánto es libre?" */
+export interface InfoDeMinimis {
+  superado: boolean;
+  valorTope: number | null;
+}
+
 export interface DiagnosticoEnvio {
   id: string;
   nivel: NivelVeredicto;
@@ -18,6 +27,7 @@ export interface DiagnosticoEnvio {
   accionesSugeridas: string[];
   partidaArancelariaTentativa: string;
   desgloseImpuestos: DesgloseImpuestos | null;
+  deMinimis: InfoDeMinimis | null;
   createdAt: string;
   input: {
     paisDestino: string;
@@ -25,6 +35,13 @@ export interface DiagnosticoEnvio {
     pesoKg?: number;
     valorDeclaradoUsd?: number;
     partidaArancelariaTentativa?: string;
+    // Le devuelven al usuario lo que él mismo declaró (transporte y
+    // modalidad) junto al veredicto — no es una afirmación sobre qué
+    // régimen aplicó el motor de reglas puertas adentro, solo confirma
+    // lo que se envió a evaluar. Opcionales porque las consultas
+    // guardadas antes de este cambio no lo tienen.
+    transportType?: TransportType;
+    shipmentModality?: ShipmentModality;
   };
 }
 

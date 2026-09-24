@@ -39,7 +39,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
           No pudimos cargar tu perfil
         </h1>
         <p className="text-sm text-slate-500 mb-6">
-          Tu sesión sigue activa. Revisá tu conexión y reintentá.
+          Tu sesión sigue activa. Revisa tu conexión y vuelve a intentarlo.
         </p>
         <button
           onClick={() => refreshProfile()}

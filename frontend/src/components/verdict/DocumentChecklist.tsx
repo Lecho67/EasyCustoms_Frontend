@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Check, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { Button } from "@/components/ui/Button";
 import type { NivelVeredicto } from "@/lib/types";
 
 interface DocumentChecklistProps {
@@ -24,9 +23,10 @@ export function DocumentChecklist({ documentos, nivel }: DocumentChecklistProps)
           {documentos.map((doc, i) => (
             <Checkbox key={i} label={doc} checked={!!checked[i]} onChange={() => toggle(i)} />
           ))}
-          <Button variant="secondary" className="mt-3 w-full">
-            Descargar plantillas
-          </Button>
+          <p className="mt-3 text-xs text-slate-400">
+            Estos documentos te los da quien te vendió el producto o el transportista — no los
+            genera Easy CUSTOMS.
+          </p>
         </div>
       ) : nivel === "verde" ? (
         <ul className="space-y-2 text-sm text-slate-600">

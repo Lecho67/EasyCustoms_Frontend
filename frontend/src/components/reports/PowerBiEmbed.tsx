@@ -60,7 +60,7 @@ export function PowerBiEmbed() {
   const handleCargarToken = (e: FormEvent) => {
     e.preventDefault();
     if (!embedUrl || !reportId || !accessToken) {
-      setTokenError("Completá Embed URL, Report ID y Access Token.");
+      setTokenError("Completa Embed URL, Report ID y Access Token.");
       return;
     }
     setTokenError(null);
@@ -209,7 +209,7 @@ export function PowerBiEmbed() {
             </>
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-sm text-slate-400">
-              Pegá la URL de tu reporte de Power BI (Publicar en la Web o Embed seguro) para
+              Pega la URL de tu reporte de Power BI (Publicar en la Web o Embed seguro) para
               visualizarlo acá.
             </div>
           )

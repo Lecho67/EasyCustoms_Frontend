@@ -58,7 +58,7 @@ export function NotificationPreferencesCard() {
     <section className="mb-8 rounded-xl border border-slate-200 p-5">
       <h2 className="mb-1 text-sm font-semibold text-slate-800">Preferencias de notificaciones</h2>
       <p className="mb-4 text-xs text-slate-400">
-        Elegí qué avisos querés recibir en la campanita.
+        Elige qué avisos quieres recibir en la campanita.
       </p>
 
       <div className="space-y-3">

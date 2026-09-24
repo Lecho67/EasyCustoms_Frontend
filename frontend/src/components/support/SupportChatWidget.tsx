@@ -25,7 +25,7 @@ interface Mensaje {
 }
 
 const MENSAJE_BIENVENIDA =
-  "Hola, soy el asistente de Easy CUSTOMS. Puedo ayudarte con preguntas generales sobre aduanas, tu casillero y tributos. Para el estado de tus propios envíos, revisá tu Historial; si preferís hablar con una persona, usá el botón de abajo.";
+  "Hola, soy el asistente de Easy CUSTOMS. Puedo ayudarte con preguntas generales sobre aduanas, tu casillero y tributos. Para el estado de tus propios envíos, revisa tu Historial; si prefieres hablar con una persona, usa el botón de abajo.";
 
 export function SupportChatWidget() {
   const [abierto, setAbierto] = useState(false);
@@ -85,7 +85,7 @@ export function SupportChatWidget() {
         {
           id: generarId(),
           autor: "asistente",
-          texto: "No pude responder en este momento. Probá de nuevo en un momento o solicitá un asesor.",
+          texto: "No pude responder en este momento. Prueba de nuevo en un momento o solicita un asesor.",
         },
       ]);
       toast.error("No se pudo enviar tu mensaje", err instanceof Error ? err.message : undefined);
@@ -103,7 +103,7 @@ export function SupportChatWidget() {
     } catch (err) {
       toast.error(
         "No se pudo enviar tu solicitud",
-        err instanceof Error ? err.message : "Intentá de nuevo en un momento."
+        err instanceof Error ? err.message : "Inténtalo de nuevo en un momento."
       );
     } finally {
       setEnviandoSolicitud(false);
@@ -167,7 +167,7 @@ export function SupportChatWidget() {
 
           <div className="border-t border-slate-100 px-4 py-2 text-xs">
             {solicitudPendiente ? (
-              <span className="text-slate-500">Ya tenés una solicitud de asesor pendiente.</span>
+              <span className="text-slate-500">Ya tienes una solicitud de asesor pendiente.</span>
             ) : (
               <button
                 type="button"
@@ -175,14 +175,14 @@ export function SupportChatWidget() {
                 disabled={enviandoSolicitud}
                 className="font-medium text-cobalt hover:underline disabled:text-slate-400"
               >
-                {enviandoSolicitud ? "Enviando solicitud..." : "¿Preferís hablar con una persona? Solicitar asesor"}
+                {enviandoSolicitud ? "Enviando solicitud..." : "¿Prefieres hablar con una persona? Solicitar asesor"}
               </button>
             )}
           </div>
 
           <form onSubmit={handleEnviar} className="flex items-center gap-2 border-t border-slate-100 p-3">
             <label htmlFor="chat-ayuda-mensaje" className="sr-only">
-              Escribí tu pregunta
+              Escribe tu pregunta
             </label>
             <input
               id="chat-ayuda-mensaje"
@@ -190,7 +190,7 @@ export function SupportChatWidget() {
               value={entrada}
               onChange={(e) => setEntrada(e.target.value)}
               disabled={enviando}
-              placeholder="Escribí tu pregunta..."
+              placeholder="Escribe tu pregunta..."
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-cobalt focus:border-transparent disabled:bg-slate-50"
             />
             <button

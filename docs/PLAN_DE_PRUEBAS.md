@@ -414,20 +414,42 @@ las filas de prueba que hayan quedado de una corrida interrumpida.
 |---|---|---|
 | E-CA-01 | cliente (KYC aprobado) crea una pre-alerta desde `/casillero`, la ve en la lista y la borra | La fila aparece con `carrier — tracking`; tras confirmar el borrado desaparece |
 
-Pendiente (necesita teardown más pesado — service-role key): veredicto →
-historial con persistencia real, KYC upload → aprobación de agente →
-casillero, override de un caso.
+### `e2e/authenticated/flujo-kyc.spec.ts` — 1 caso
+
+Escritura real (perfil + archivo en el bucket `kyc-documents`), sin
+teardown: subir un documento nuevo siempre resetea `kyc_status` a
+`pendiente` sin importar el estado previo, así que correrlo repetidas veces
+no depende de en qué quedó la corrida anterior. Usa dos `browser.newContext`
+manuales (cliente y agente) dentro del mismo test.
+
+| ID | Descripción | Resultado esperado |
+|---|---|---|
+| E-KYC-01 | Cliente sube tipo/número/foto de documento en `/verificar-identidad`; agente lo aprueba desde `/panel-agente/kyc`; cliente recarga | Badge pasa de "En revisión" a "Verificado" |
+
+Pendiente (necesita service-role key en `.env.e2e` para sembrar/borrar
+filas): veredicto → historial con persistencia real en `customs_queries`,
+override de un caso desde `/panel-agente` (`revision-agente.spec.ts`),
+aislamiento de datos entre clientes — cliente A no debería poder ver
+`/consulta/:id` de cliente B, y `queryHistoryService.ts` hoy depende 100%
+de RLS para eso, sin test que lo verifique (`aislamiento-datos.spec.ts`).
+
+Pendiente aparte (no es de teardown): cobertura RBAC de gestor ya está en
+código (`rbac.spec.ts`, ver abajo) y en `.env.e2e.example`/§ 7.1 — falta
+que exista la cuenta `e2e.gestor@` en Supabase para que la suite `setup`
+la levante. Hasta entonces `hayCredsAuth` da `false` y el proyecto
+`autenticadas` completo (los 3 roles existentes incluidos) sigue sin correr.
 
 ## 7. Casos de prueba manuales (seguridad / integración)
 
 ### 7.1. Setup de las cuentas `e2e.*` (una vez)
 
 1. Supabase → **Authentication → Users → Add user** (con contraseña, "Auto
-   Confirm"): `e2e.cliente@`, `e2e.agente@`, `e2e.admin@bordercheck.test`.
+   Confirm"): `e2e.cliente@`, `e2e.agente@`, `e2e.admin@`, `e2e.gestor@bordercheck.test`.
 2. SQL Editor:
    ```sql
    update public.profiles set role = 'agente' where email = 'e2e.agente@bordercheck.test';
    update public.profiles set role = 'admin'  where email = 'e2e.admin@bordercheck.test';
+   update public.profiles set role = 'gestor' where email = 'e2e.gestor@bordercheck.test';
 
    update public.profiles
    set kyc_status = 'aprobado',
@@ -435,7 +457,12 @@ casillero, override de un caso.
        habeas_data_accepted_at = now()
    where email = 'e2e.cliente@bordercheck.test';
    ```
-3. `cp frontend/.env.e2e.example frontend/.env.e2e` y completar las 3 contraseñas.
+   Opcional: para que `/gestor` no muestre la cartera vacía, asignarle el
+   cliente E2E — `update public.profiles set gestor_id = (select id from
+   auth.users where email = 'e2e.gestor@bordercheck.test') where email =
+   'e2e.cliente@bordercheck.test';`. No hace falta para que el test pase
+   (el `<h1>Mis clientes</h1>` se ve igual con cartera vacía).
+3. `cp frontend/.env.e2e.example frontend/.env.e2e` y completar las 4 contraseñas.
 4. `cd frontend && npm run test:e2e` — ahora corre pública + `setup` + autenticadas.
 
 ### 7.2. Casos manuales

@@ -7,8 +7,10 @@ import { mkdirSync } from "node:fs";
  * token de Supabase) en `e2e/.auth/<rol>.json`. Las specs autenticadas lo
  * reusan con `test.use({ storageState })` — no vuelven a pasar por el login.
  *
- * Este archivo solo se ejecuta si están las 6 variables `E2E_*` (ver
- * `playwright.config.ts`).
+ * Este archivo solo se ejecuta si están las 6 variables `E2E_*` requeridas
+ * (ver `playwright.config.ts`). `gestor` es opcional aparte: se suma al
+ * loop solo si sus 2 variables también están, sin bloquear a los otros 3
+ * roles mientras no exista la cuenta `e2e.gestor@` en Supabase.
  */
 
 const AUTH_DIR = "e2e/.auth";
@@ -29,6 +31,15 @@ const ROLES = [
     email: process.env.E2E_ADMIN_EMAIL!,
     password: process.env.E2E_ADMIN_PASSWORD!,
   },
+  ...(process.env.E2E_GESTOR_EMAIL && process.env.E2E_GESTOR_PASSWORD
+    ? [
+        {
+          nombre: "gestor",
+          email: process.env.E2E_GESTOR_EMAIL,
+          password: process.env.E2E_GESTOR_PASSWORD,
+        },
+      ]
+    : []),
 ];
 
 for (const rol of ROLES) {

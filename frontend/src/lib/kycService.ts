@@ -23,7 +23,7 @@ export async function actualizarDatosIdentidad(
 
 export async function subirDocumentoIdentidad(userId: string, file: File): Promise<Profile> {
   if (!TIPOS_PERMITIDOS.includes(file.type)) {
-    throw new Error("Formato no permitido. Subí una imagen (JPG/PNG) o un PDF.");
+    throw new Error("Formato no permitido. Sube una imagen (JPG/PNG) o un PDF.");
   }
   if (file.size > TAMANO_MAXIMO_MB * 1024 * 1024) {
     throw new Error(`El archivo supera el tamaño máximo de ${TAMANO_MAXIMO_MB} MB.`);

@@ -15,6 +15,11 @@ import { test, expect } from "@playwright/test";
 const H1_TIMEOUT = 15_000;
 const NAV_TIMEOUT = 10_000;
 
+// Cuenta e2e.gestor@ todavía no existe en Supabase (ver .env.e2e.example) —
+// a diferencia de cliente/agente/admin, no bloquea el resto de la suite:
+// este describe se saltea entero hasta que exista.
+const hayGestor = !!(process.env.E2E_GESTOR_EMAIL && process.env.E2E_GESTOR_PASSWORD);
+
 test.describe("cliente", () => {
   test.use({ storageState: "e2e/.auth/cliente.json" });
 
@@ -63,6 +68,36 @@ test.describe("agente", () => {
   test("/admin lo redirige a /panel-agente", async ({ page }) => {
     await page.goto("/admin");
     await page.waitForURL(/\/panel-agente$/, { timeout: NAV_TIMEOUT });
+  });
+});
+
+(hayGestor ? test.describe : test.describe.skip)("gestor", () => {
+  test.use({ storageState: "e2e/.auth/gestor.json" });
+
+  test("entra a /gestor", async ({ page }) => {
+    await page.goto("/gestor");
+    await expect(page.getByRole("heading", { name: "Mis clientes" })).toBeVisible({
+      timeout: H1_TIMEOUT,
+    });
+    await expect(page).toHaveURL(/\/gestor$/);
+  });
+
+  test("entra a /reportes (gestor está en allowedRoles)", async ({ page }) => {
+    await page.goto("/reportes");
+    await expect(page.getByRole("heading", { name: "Reportes" })).toBeVisible({
+      timeout: H1_TIMEOUT,
+    });
+    await expect(page).toHaveURL(/\/reportes$/);
+  });
+
+  test("/admin lo redirige a /gestor", async ({ page }) => {
+    await page.goto("/admin");
+    await page.waitForURL(/\/gestor$/, { timeout: NAV_TIMEOUT });
+  });
+
+  test("/panel-agente lo redirige a /gestor", async ({ page }) => {
+    await page.goto("/panel-agente");
+    await page.waitForURL(/\/gestor$/, { timeout: NAV_TIMEOUT });
   });
 });
 

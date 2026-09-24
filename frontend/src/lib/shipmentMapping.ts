@@ -1,4 +1,4 @@
-import type { WizardFormData, DiagnosticoEnvio, DesgloseImpuestos } from "./types";
+import type { WizardFormData, DiagnosticoEnvio, DesgloseImpuestos, InfoDeMinimis } from "./types";
 import { getCountryInfo } from "./countryCodes";
 
 // ----------------------------------------------------------------------------
@@ -239,9 +239,9 @@ const NIVEL_POR_ESTADO = {
 } as const;
 
 const TITULO_POR_ESTADO = {
-  APROBADO: "Apto para envío",
-  PRECAUCION: "Requiere documentación / precaución",
-  BLOQUEO: "Envío bloqueado / prohibido",
+  APROBADO: "Tu envío puede pasar sin problema",
+  PRECAUCION: "Puedes enviarlo, pero falta un documento",
+  BLOQUEO: "Este envío no se puede hacer así",
 } as const;
 
 function inferDocumentosRequeridos(alerts: DecisionEngineAlert[]): string[] {
@@ -289,6 +289,14 @@ export function mapDecisionResultToDiagnostico(
     result.alerts.find((a) => a.legal_reference)?.legal_reference ??
     "Normativa aduanera general aplicable al país de destino.";
 
+  const deMinimis: InfoDeMinimis | null =
+    result.tax_estimation.de_minimis_threshold_exceeded == null
+      ? null
+      : {
+          superado: result.tax_estimation.de_minimis_threshold_exceeded,
+          valorTope: result.tax_estimation.de_minimis_threshold_value ?? null,
+        };
+
   const valor = wizardData.valorDeclaradoUsd ?? 0;
   let desgloseImpuestos: DesgloseImpuestos | null = null;
   if (valor > 0) {
@@ -317,6 +325,7 @@ export function mapDecisionResultToDiagnostico(
     partidaArancelariaTentativa:
       request.product_classification.hs_code ?? "Sin partida tentativa declarada",
     desgloseImpuestos,
+    deMinimis,
     createdAt: result.evaluated_at,
     input: {
       paisDestino: wizardData.paisDestino,
@@ -324,6 +333,29 @@ export function mapDecisionResultToDiagnostico(
       pesoKg: wizardData.pesoKg,
       valorDeclaradoUsd: wizardData.valorDeclaradoUsd,
       partidaArancelariaTentativa: wizardData.partidaArancelariaTentativa,
+      transportType: wizardData.transportType || undefined,
+      shipmentModality: wizardData.shipmentModality || undefined,
     },
   };
 }
+
+/** Etiquetas legibles para mostrarle al usuario lo que declaró (transporte y
+ * modalidad) junto al veredicto — no representan cómo el motor de reglas
+ * evalúa internamente cada régimen, solo confirman el dato enviado. Mismas
+ * 8 opciones que ofrece el wizard (ver ShipmentForm.tsx). */
+export const TRANSPORT_TYPE_LABELS: Record<Exclude<WizardFormData["transportType"], "">, string> = {
+  air: "Aéreo",
+  sea: "Marítimo",
+  land: "Terrestre",
+  postal_courier: "Mensajería",
+};
+
+export const SHIPMENT_MODALITY_LABELS: Record<
+  Exclude<WizardFormData["shipmentModality"], "">,
+  string
+> = {
+  commercial_shipment: "Envío comercial",
+  personal_shipment_gift: "Envío personal / regalo",
+  checked_baggage: "Equipaje facturado",
+  carry_on_baggage: "Equipaje de mano",
+};

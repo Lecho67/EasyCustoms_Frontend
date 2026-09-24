@@ -130,17 +130,55 @@ Entorno decidido: **Supabase real + cuentas dedicadas `e2e.*@bordercheck.test`**
 `setup` (`e2e/auth.setup.ts`) loguea una vez por rol y cachea el
 `storageState` en `e2e/.auth/<rol>.json`. Se agregan a la corrida solo si
 está `frontend/.env.e2e` (ver `.env.e2e.example`; setup en
-`docs/PLAN_DE_PRUEBAS.md` § 7.1). 17 casos: RBAC de `ProtectedRoute` por rol
+`docs/PLAN_DE_PRUEBAS.md` § 7.1). 18 casos: RBAC de `ProtectedRoute` por rol
 + carga con sesión de `/dashboard`, `/historial`, `/perfil`,
 `/consulta/nueva`, `/casillero` + wizard de envío → veredicto (motor de
 reglas forzado al mock vía `webServer.env`, veredicto verde y ámbar) + alta y
 baja de una pre-alerta en el casillero (escritura real; se limpia sola porque
-la política DELETE de `pre_alerts` es permisiva para el dueño).
+la política DELETE de `pre_alerts` es permisiva para el dueño) + **flujo KYC
+completo** (`flujo-kyc.spec.ts`): cliente sube documento desde
+`/verificar-identidad`, agente lo aprueba desde `/panel-agente/kyc`, cliente
+ve "Verificado" al recargar — escritura real (perfil + archivo en el bucket
+`kyc-documents`), determinístico sin teardown porque subir un documento
+nuevo siempre resetea `kyc_status` a `pendiente`.
 
-**Pendiente — flujos con teardown más pesado.** veredicto → historial guardado
-en `customs_queries`, carga de KYC → aprobación de agente → casillero,
-revisión/override de un caso. Necesitan una service-role key en `.env.e2e`
-para borrar filas / resetear estado por corrida.
+**Bug de infra encontrado y arreglado (sesión 2026-09-23, diseño de
+estrategia de tests):** la suite autenticada era flaky al azar entre
+`agente`/`admin`/`cliente` — la app tiene "sesión única por cuenta" (última
+gana, ver `docs/sql/limites-de-uso.sql`) y Playwright reusa un mismo
+`storageState` cacheado en muchos contextos de navegador a lo largo de una
+corrida; `autoRefreshToken` de supabase-js podía emitir un `session_id`
+nuevo en cada contexto sin pasar por `registrar_sesion()` (eso solo corre en
+`signIn()`), así que la sesión única terminaba peleando contra sí misma y
+expulsando cuentas sin que nadie externo se haya logueado. Fix: nueva var
+`VITE_E2E` (seteada en `playwright.config.ts` `webServer.env`) que
+`AuthContext.tsx` usa para saltarse ese efecto — no toca producción. De
+paso se limpiaron ~30 sesiones viejas acumuladas en `auth.sessions` para
+`e2e.agente@`/`e2e.admin@` (`docs/sql/diagnostico-sesion-e2e-agente-admin.sql`
+y `fix-sesion-e2e-agente-admin.sql`) que agravaban el problema. Verificado
+con 5+ corridas completas seguidas, 100% determinista.
+
+**Pendiente — necesitan más que la infra actual:**
+- **Veredicto → historial guardado en `customs_queries`** y **revisión/override
+  de un caso desde `/panel-agente`** (`revision-agente.spec.ts`): el mock del
+  motor de reglas no escribe en `customs_queries`, así que no hay forma de
+  sembrar un caso real en la cola desde el propio E2E. Necesitan una
+  service-role key en `.env.e2e` para insertar/borrar filas por corrida.
+- **Aislamiento de datos entre clientes** (`aislamiento-datos.spec.ts`): cliente
+  A no debería poder ver `/consulta/:id` de cliente B —
+  `queryHistoryService.fetchConsultaById`/`fetchConsultas` hacen `select("*")`
+  sin filtrar por `user_id`, así que hoy depende 100% de RLS, sin ningún test
+  que lo verifique. Mismo bloqueo: necesita sembrar una fila real (service-role
+  key) o una segunda cuenta cliente dedicada.
+- **Cartera de gestor** ✅ código listo, 🔷 falta la cuenta. `rbac.spec.ts`
+  ya tiene 4 casos de gestor (`/gestor`, `/reportes`, redirecciones desde
+  `/admin` y `/panel-agente`); `auth.setup.ts` y `playwright.config.ts` ya
+  saben levantar la sesión si `E2E_GESTOR_EMAIL/PASSWORD` están en
+  `.env.e2e` (opcional a propósito — sin esas 2 variables, esos 4 casos
+  quedan `skipped` sin afectar al resto de la suite). Falta un solo paso
+  manual: crear `e2e.gestor@bordercheck.test` en Supabase con rol `gestor`
+  (`docs/PLAN_DE_PRUEBAS.md` § 7.1) y completar las 2 variables — en cuanto
+  eso exista, los 4 casos corren solos, sin tocar código.
 
 **CI:** el E2E **no corre en CI** todavía (requiere guardar las credenciales
 `e2e.*` como secretos). El `ci.yml` sigue siendo solo `lint` + `test:run` + `build`.
@@ -251,4 +289,50 @@ Resultado: `APROBADO 25 · REQUIERE_DOCUMENTACION 15 · PRECAUCION 4 · BLOQUEO 
   orden por fecha). Ambas paginan en cliente de a 8 con el hook compartido
   `usePagination` + el componente `ui/Pagination`. La barra de filtros
   reusa el patrón visual de `AgentPanel` (`rounded-xl border bg-slate-50`).
+
+---
+
+## 12. Brechas de producto/normativa en el veredicto (audit comercio exterior)
+
+Del audit de un experto en comercio exterior + product manager (sesión
+2026-09-23) sobre si el wizard y el veredicto resuelven el problema real del
+importador persona natural en Colombia. Detalle completo (matriz de brechas,
+RICE) en la conversación de esa sesión — acá solo el resumen accionable.
+
+**Hecho:**
+- **Tope de minimis ✅.** El motor ya calculaba
+  `tax_estimation.de_minimis_threshold_exceeded/value` pero se descartaba en
+  `mapDecisionResultToDiagnostico` — nunca llegaba a la UI. Ahora
+  `DiagnosticoEnvio.deMinimis` lo trae y `TaxBreakdownCard` lo muestra como
+  primer dato ("¿tu envío queda libre de impuestos o no?").
+- **Disclaimer legal ✅.** `ResultView.tsx` deja explícito que el resultado es
+  una estimación con IA, no una liquidación oficial de la DIAN.
+- **Régimen declarado ✅.** `VerdictCard` le confirma al usuario la modalidad
+  y el transporte que declaró (no afirma cómo el motor evalúa cada régimen
+  puertas adentro, solo refleja el dato que el propio usuario envió).
+
+**Pendiente — necesitan verificar algo externo antes de tocar código (no son
+solo cambios de UI):**
+- **Base de cálculo FOB vs. CIF.** `TaxBreakdownCard` dice "no incluye el
+  costo de transporte", lo que sugiere que el arancel se calcula sobre el
+  valor del producto solo (FOB), no sobre costo+seguro+flete (CIF). Hay que
+  confirmar con el backend real (repo del colaborador) qué base usa antes de
+  aclarar esto en la UI — afirmar la base incorrecta sería peor que no decir
+  nada.
+- **Conversión a COP con la TRM usada.** Todo el flujo es en USD
+  (`currency: "USD"` fijo en `shipmentMapping.ts`); el usuario piensa y paga
+  en pesos. Requiere decidir una fuente de tasa de cambio (API externa o
+  manual) — implica una decisión de infraestructura nueva, no solo de copy.
+- **Producto nuevo vs. usado.** No existe el campo en `WizardFormData`.
+  Bajo valor si el backend no tiene todavía una regla que lo use — coordinar
+  primero con el colaborador de backend antes de agregarlo al wizard.
+- **Checklist de documentos por categoría.** `inferDocumentosRequeridos`
+  (`shipmentMapping.ts`) solo detecta 4 substrings fijos en el texto de las
+  alertas (DGD, MSDS, certificado fitosanitario, receta) — no cubre INVIMA,
+  ICA, licencias de importación DIAN, etc. Necesita una base de conocimiento
+  categoría→requisito verificada contra fuente oficial, no otro regex.
+- **Comparador de modalidades de envío.** No existe ninguna función que
+  compare el resultado del mismo ítem bajo distintas modalidades (regalo
+  personal vs. envío comercial, por ejemplo). Alto esfuerzo — depende de que
+  primero exista claridad de bajo qué régimen se evalúa cada modalidad.
 - **Estados vacío/carga/error** poco pulidos en varios paneles.

@@ -55,7 +55,7 @@ export function Profile() {
   // --- Handlers Tarjeta 1 ---
   const handleGuardarInformacionPersonal = async () => {
     if (!fullName.trim()) {
-      toast.error("Completá tu nombre completo");
+      toast.error("Completa tu nombre completo");
       return;
     }
     setGuardandoInfo(true);
@@ -73,7 +73,7 @@ export function Profile() {
   // --- Handler Tarjeta 2 ---
   const handleGuardarDireccion = async () => {
     if (!addressStreet.trim() || !addressCity.trim() || !addressCountry.trim()) {
-      toast.error("Completá al menos dirección, ciudad y país");
+      toast.error("Completa al menos tu dirección, ciudad y país");
       return;
     }
     setGuardandoDireccion(true);
@@ -99,7 +99,7 @@ export function Profile() {
     setEnviandoCambioContrasena(true);
     try {
       await solicitarCambioContrasena(user.email!);
-      toast.success("Revisá tu correo", "Te enviamos un enlace para restablecer tu contraseña.");
+      toast.success("Revisa tu correo", "Te enviamos un enlace para restablecer tu contraseña.");
     } catch (err) {
       toast.error("No se pudo enviar el enlace", err instanceof Error ? err.message : undefined);
     } finally {
@@ -111,7 +111,7 @@ export function Profile() {
     <div className="max-w-2xl mx-auto mt-10 sm:mt-16 mb-16 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-bold text-cobalt mb-1">Mi Perfil</h1>
       <p className="text-slate-600 mb-8">
-        Gestioná tus datos de contacto, tu dirección y la seguridad de tu cuenta.
+        Gestiona tus datos de contacto, tu dirección y la seguridad de tu cuenta.
       </p>
 
       {/* --- Tarjeta 1: Información de contacto --- */}

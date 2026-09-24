@@ -117,7 +117,7 @@ describe("NotificationBell", () => {
 
     await user.click(screen.getByRole("button", { name: /notificaciones/i }));
 
-    expect(screen.getByText("No tenés notificaciones.")).toBeInTheDocument();
+    expect(screen.getByText("No tienes notificaciones.")).toBeInTheDocument();
   });
 
   it("el trigger expone aria-expanded y el panel tiene role=region", async () => {

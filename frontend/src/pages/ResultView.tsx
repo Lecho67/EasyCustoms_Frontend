@@ -1,7 +1,7 @@
 // src/pages/ResultView.tsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { History as HistoryIcon, Plus, CheckCircle2 } from "lucide-react";
+import { History as HistoryIcon, Plus, CheckCircle2, Info } from "lucide-react";
 import { useQueryStore } from "@/store/useQueryStore";
 import { fetchConsultaById } from "@/lib/queryHistoryService";
 import { VerdictCard } from "@/components/verdict/VerdictCard";
@@ -68,6 +68,16 @@ export function ResultView() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-6">
       <VerdictCard diagnostico={diagnostico} />
 
+      <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+        <p>
+          Este resultado es una estimación orientativa generada con asistencia de IA, no una
+          liquidación oficial de la DIAN. El valor final de tributos y la clasificación
+          arancelaria definitiva los determina la autoridad aduanera o tu agencia de aduanas al
+          momento de la nacionalización.
+        </p>
+      </div>
+
       <NextStepsCard acciones={diagnostico.accionesSugeridas} />
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -84,6 +94,7 @@ export function ResultView() {
       <TaxBreakdownCard
         desglose={diagnostico.desgloseImpuestos}
         partidaArancelariaTentativa={diagnostico.partidaArancelariaTentativa}
+        deMinimis={diagnostico.deMinimis}
       />
 
       <div className="flex items-center gap-2 text-xs text-slate-400">

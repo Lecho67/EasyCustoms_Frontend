@@ -1,20 +1,40 @@
 import { Receipt } from "lucide-react";
-import type { DesgloseImpuestos } from "@/lib/types";
+import type { DesgloseImpuestos, InfoDeMinimis } from "@/lib/types";
 
 interface TaxBreakdownCardProps {
   desglose: DesgloseImpuestos | null;
   partidaArancelariaTentativa: string;
+  deMinimis: InfoDeMinimis | null;
 }
 
-export function TaxBreakdownCard({ desglose, partidaArancelariaTentativa }: TaxBreakdownCardProps) {
+export function TaxBreakdownCard({ desglose, partidaArancelariaTentativa, deMinimis }: TaxBreakdownCardProps) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
       <p className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
         <Receipt className="w-4 h-4" /> Desglose de impuestos estimados
       </p>
 
+      {/* La pregunta #1 de cualquier importador: "¿pago impuestos o no?".
+          El motor de reglas ya calcula esto (tax_estimation.de_minimis_*)
+          pero hasta ahora se descartaba en el mapeo y nunca llegaba acá. */}
+      {deMinimis && (
+        <div
+          className={`mb-4 rounded-lg px-3 py-2 text-xs font-medium ${
+            deMinimis.superado ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-700"
+          }`}
+        >
+          {deMinimis.superado
+            ? `Tu envío supera el tope libre de impuestos${
+                deMinimis.valorTope != null ? ` (USD ${deMinimis.valorTope})` : ""
+              }.`
+            : `Tu envío está dentro del tope libre de impuestos${
+                deMinimis.valorTope != null ? ` (hasta USD ${deMinimis.valorTope})` : ""
+              }.`}
+        </div>
+      )}
+
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
-        <span className="text-slate-500">Partida arancelaria tentativa</span>
+        <span className="text-slate-500">Partida arancelaria (HS Code) tentativa</span>
         <span className="font-mono-data min-w-0 break-words text-slate-700">{partidaArancelariaTentativa}</span>
       </div>
 

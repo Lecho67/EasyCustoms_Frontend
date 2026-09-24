@@ -70,7 +70,7 @@ describe("SupportChatWidget — responde con Gemini", () => {
     renderWidget();
     await abrir(user);
 
-    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "cuanto puedo importar sin pagar");
+    await user.type(screen.getByPlaceholderText("Escribe tu pregunta..."), "cuanto puedo importar sin pagar");
     await user.keyboard("{Enter}");
 
     expect(await screen.findByText("Los envíos hasta USD 200 no pagan arancel.")).toBeInTheDocument();
@@ -84,12 +84,12 @@ describe("SupportChatWidget — responde con Gemini", () => {
     renderWidget();
     await abrir(user);
 
-    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "hola");
+    await user.type(screen.getByPlaceholderText("Escribe tu pregunta..."), "hola");
     await user.keyboard("{Enter}");
 
-    expect(screen.getByPlaceholderText("Escribí tu pregunta...")).toBeDisabled();
+    expect(screen.getByPlaceholderText("Escribe tu pregunta...")).toBeDisabled();
     resolver("listo");
-    await waitFor(() => expect(screen.getByPlaceholderText("Escribí tu pregunta...")).toBeEnabled());
+    await waitFor(() => expect(screen.getByPlaceholderText("Escribe tu pregunta...")).toBeEnabled());
   });
 
   it("si falla la llamada, muestra un mensaje de error y un toast", async () => {
@@ -98,7 +98,7 @@ describe("SupportChatWidget — responde con Gemini", () => {
     renderWidget();
     await abrir(user);
 
-    await user.type(screen.getByPlaceholderText("Escribí tu pregunta..."), "hola");
+    await user.type(screen.getByPlaceholderText("Escribe tu pregunta..."), "hola");
     await user.keyboard("{Enter}");
 
     expect(await screen.findByText(/No pude responder en este momento/)).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe("SupportChatWidget — solicitar asesor", () => {
     await user.click(boton);
 
     await waitFor(() => expect(crearSolicitudMock).toHaveBeenCalledTimes(1));
-    expect(await screen.findByText(/Ya tenés una solicitud de asesor pendiente/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ya tienes una solicitud de asesor pendiente/)).toBeInTheDocument();
   });
 
   it("si ya había una solicitud pendiente al abrir el chat, no ofrece el botón", async () => {
@@ -132,7 +132,7 @@ describe("SupportChatWidget — solicitar asesor", () => {
     renderWidget();
     await abrir(user);
 
-    expect(await screen.findByText(/Ya tenés una solicitud de asesor pendiente/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ya tienes una solicitud de asesor pendiente/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Solicitar asesor/ })).not.toBeInTheDocument();
   });
 });

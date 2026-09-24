@@ -73,7 +73,7 @@ export function ResetPassword() {
       <div className="max-w-md mx-auto mt-16 sm:mt-24 px-4 sm:px-6 lg:px-8 py-6 text-center">
         <h1 className="text-2xl font-bold text-cobalt mb-2">Enlace inválido o expirado</h1>
         <p className="text-slate-600 mb-6">
-          Este enlace de restablecimiento de contraseña ya no es válido. Solicitá uno nuevo desde tu perfil
+          Este enlace de restablecimiento de contraseña ya no es válido. Solicita uno nuevo desde tu perfil
           o desde la pantalla de inicio de sesión.
         </p>
         <Button onClick={() => navigate("/login")}>Ir a iniciar sesión</Button>
@@ -87,7 +87,7 @@ export function ResetPassword() {
         <KeyRound className="w-5 h-5 text-cobalt" />
         <h1 className="text-2xl font-bold text-cobalt">Restablecer contraseña</h1>
       </div>
-      <p className="text-slate-600 mb-8">Ingresá tu nueva contraseña para completar el restablecimiento.</p>
+      <p className="text-slate-600 mb-8">Ingresa tu nueva contraseña para completar el restablecimiento.</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <PasswordInput
@@ -102,7 +102,7 @@ export function ResetPassword() {
           label="Confirmar nueva contraseña"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="Repetí la contraseña"
+          placeholder="Repite la contraseña"
           minLength={8}
           required
         />

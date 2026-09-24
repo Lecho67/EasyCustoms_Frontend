@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfileError(error.message);
       toast.error(
         'No pudimos cargar tu perfil',
-        'Revisá tu conexión y reintentá; no cerramos tu sesión.'
+        'Revisa tu conexión y vuelve a intentarlo; no cerramos tu sesión.'
       );
     }
   }, []);
@@ -130,9 +130,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // sesión, `registrar_sesion()` revoca ésta y acá nos enteramos por Realtime
   // sobre `sesiones_activas`, al volver el foco a la pestaña, o en <60 s por
   // polling. Ver docs/sql/limites-de-uso.sql.
+  //
+  // Desactivado bajo VITE_E2E (ver playwright.config.ts): Playwright reusa un
+  // mismo storageState cacheado en muchos contextos de navegador distintos a
+  // lo largo de una corrida, y `autoRefreshToken` de supabase-js puede emitir
+  // un `session_id` nuevo en cada uno sin pasar por `registrar_sesion()` (eso
+  // solo corre en signIn()) — la sesión única terminaba peleando contra sí
+  // misma entre tests, expulsando cuentas al azar sin que nadie externo se
+  // haya logueado. No aplica en producción, donde cada usuario es un solo
+  // navegador real.
   const userId = user?.id;
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || import.meta.env.VITE_E2E) return;
 
     let cerrando = false;
     const verificar = async () => {

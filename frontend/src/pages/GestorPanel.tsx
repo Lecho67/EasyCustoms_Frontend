@@ -85,7 +85,7 @@ export function GestorPanel() {
         <p className="text-sm text-slate-400">Cargando...</p>
       ) : cartera.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-          Todavía no tenés clientes asignados.
+          Todavía no tienes clientes asignados.
         </div>
       ) : filtrados.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">

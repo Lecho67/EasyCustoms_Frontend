@@ -59,7 +59,7 @@ export function Login() {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      setError('Ingresá tu correo para enviarte el enlace.');
+      setError('Ingresa tu correo para enviarte el enlace.');
       return;
     }
     setError(null);
@@ -92,12 +92,12 @@ export function Login() {
         {recuperacionEnviada ? (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
             Si <span className="font-medium">{email}</span> tiene una cuenta, te enviamos un enlace
-            para restablecer la contraseña. Revisá tu correo (y la carpeta de spam).
+            para restablecer la contraseña. Revisa tu correo (y la carpeta de spam).
           </div>
         ) : (
           <>
             <p className="mb-6 text-sm text-slate-500">
-              Ingresá tu correo y te enviamos un enlace para elegir una nueva contraseña.
+              Ingresa tu correo y te enviamos un enlace para elegir una nueva contraseña.
             </p>
             <form onSubmit={handleForgotPassword} className="space-y-4">
               {error && <p className="text-sm text-red-500">{error}</p>}
@@ -126,8 +126,8 @@ export function Login() {
       </h1>
       <p className="mb-6 text-sm text-slate-500">
         {mode === 'signIn'
-          ? 'Ingresá a tu cuenta de Easy CUSTOMS.'
-          : 'Creá tu cuenta para empezar a importar con Easy CUSTOMS.'}
+          ? 'Ingresa a tu cuenta de Easy CUSTOMS.'
+          : 'Crea tu cuenta para empezar a importar con Easy CUSTOMS.'}
       </p>
 
       <div className="mb-6 flex overflow-hidden rounded-xl border border-slate-200">

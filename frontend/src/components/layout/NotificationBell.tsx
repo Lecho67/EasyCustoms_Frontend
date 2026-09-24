@@ -152,7 +152,7 @@ export function NotificationBell() {
 
           {notificaciones.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-slate-400">
-              No tenés notificaciones.
+              No tienes notificaciones.
             </p>
           ) : (
             <ul className="max-h-96 divide-y divide-slate-100 overflow-y-auto">

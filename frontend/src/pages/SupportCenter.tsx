@@ -74,7 +74,7 @@ export function SupportCenter() {
 
       {resultados.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
-          No encontramos preguntas para "{busqueda}". Probá con otros términos.
+          No encontramos preguntas para "{busqueda}". Prueba con otros términos.
         </div>
       ) : (
         <div className="space-y-8">

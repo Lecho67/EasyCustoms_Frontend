@@ -24,12 +24,12 @@ const KYC_BADGE: Record<KycStatus, { label: string; classes: string; icon: typeo
 
 const KYC_AYUDA: Record<KycStatus, string> = {
   no_iniciado:
-    "Cargá el tipo y número de tu documento oficial y una foto del mismo. Un agente revisa la información y habilita tu casillero.",
+    "Carga el tipo y número de tu documento oficial y una foto del mismo. Un agente revisa la información y habilita tu casillero.",
   pendiente:
     "Recibimos tu documento y está en revisión. Te avisamos por notificación cuando quede verificado.",
-  aprobado: "Tu identidad está verificada. Ya podés operar el casillero y los trámites aduaneros.",
+  aprobado: "Tu identidad está verificada. Ya puedes operar el casillero y los trámites aduaneros.",
   rechazado:
-    "Tu verificación fue rechazada. Corregí los datos, subí una foto más clara del documento y volvé a enviar.",
+    "Tu verificación fue rechazada. Corrige los datos, sube una foto más clara del documento y vuelve a enviarlo.",
 };
 
 export function VerifyIdentity() {
@@ -56,7 +56,7 @@ export function VerifyIdentity() {
 
   const handleGuardarDatosIdentidad = async () => {
     if (!documentNumber.trim()) {
-      toast.error("Completá el número de documento", "Es obligatorio para verificar tu identidad.");
+      toast.error("Completa tu número de documento", "Es obligatorio para verificar tu identidad.");
       return;
     }
     setGuardandoDatos(true);
@@ -199,7 +199,7 @@ export function VerifyIdentity() {
           </label>
           {profile.kyc_document_path && (
             <p className="mt-2 text-xs text-slate-400">
-              Ya tenés un documento cargado. Subir uno nuevo lo reemplaza y vuelve a ponerlo en revisión.
+              Ya tienes un documento cargado. Subir uno nuevo lo reemplaza y vuelve a ponerlo en revisión.
             </p>
           )}
         </div>

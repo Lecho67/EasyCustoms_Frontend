@@ -38,10 +38,10 @@ export function RequireCompliance({ children }: { children: ReactNode }) {
         ? {
             titulo: "Tu verificación de identidad fue rechazada",
             detalle:
-              "Para operar el casillero necesitás una identidad verificada. Revisá el motivo del rechazo, corregí los datos y volvé a subir tu documento.",
+              "Para operar el casillero necesitas una identidad verificada. Revisa el motivo del rechazo, corrige los datos y vuelve a subir tu documento.",
           }
         : {
-            titulo: "Verificá tu identidad para usar el Casillero",
+            titulo: "Verifica tu identidad para usar el Casillero",
             detalle:
               "La cláusula 3 de los Términos exige verificar tu identidad con un documento oficial vigente (CC, CE, Pasaporte o NIT) antes de operar el casillero y los trámites aduaneros.",
           };

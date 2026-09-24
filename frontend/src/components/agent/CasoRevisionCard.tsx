@@ -86,7 +86,7 @@ export function CasoRevisionCard({ caso, currentUserId, onClose, onResuelto }: P
     } catch (err) {
       toast.error(
         "No se pudo abrir el documento",
-        err instanceof Error ? err.message : "Intentá de nuevo en unos segundos."
+        err instanceof Error ? err.message : "Inténtalo de nuevo en unos segundos."
       );
     } finally {
       setAbriendoDocId(null);
@@ -100,7 +100,7 @@ export function CasoRevisionCard({ caso, currentUserId, onClose, onResuelto }: P
       await tomarCaso(caso.id);
       setTomado(true);
       setAsignadoA(currentUserId ?? null);
-      toast.success("Caso tomado", "Ya podés auditar este caso.");
+      toast.success("Caso tomado", "Ya puedes auditar este caso.");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error al tomar el caso";
       setError(msg);

@@ -26,7 +26,7 @@ export async function crearSolicitudAsesor(mensaje?: string): Promise<SolicitudA
 
   if (error) {
     if (error.code === CODIGO_YA_PENDIENTE) {
-      throw new Error("Ya tenés una solicitud de asesor pendiente.");
+      throw new Error("Ya tienes una solicitud de asesor pendiente.");
     }
     throw new Error(error.message);
   }

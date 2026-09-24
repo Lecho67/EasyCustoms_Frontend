@@ -37,6 +37,7 @@ function rowToDiagnostico(row: CustomsQuery): DiagnosticoEnvio | null {
     accionesSugeridas: [],
     partidaArancelariaTentativa: row.hs_code ?? "Sin partida tentativa declarada",
     desgloseImpuestos: null,
+    deMinimis: null,
     createdAt: row.created_at,
     input: {
       paisDestino: "",
