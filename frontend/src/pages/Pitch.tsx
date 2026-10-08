@@ -1,8 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
   PackageSearch,
   ScanSearch,
   ShieldCheck,
@@ -139,18 +136,6 @@ export function Pitch() {
           >
             Evaluar un envío ahora
           </Link>
-
-          {/* <div className="flex justify-center gap-3 max-w-sm mx-auto mt-12 p-2 rounded-xl bg-papel">
-            <div className="flex-1 py-3 rounded-xl bg-verdict-green-bg text-verdict-green-text text-xs font-medium flex flex-col items-center gap-1">
-              <CheckCircle2 className="w-4 h-4" /> Apto
-            </div>
-            <div className="flex-1 py-3 rounded-xl bg-verdict-amber-bg text-verdict-amber-text text-xs font-medium flex flex-col items-center gap-1">
-              <AlertTriangle className="w-4 h-4" /> Advertencia
-            </div>
-            <div className="flex-1 py-3 rounded-xl bg-verdict-red-bg text-verdict-red-text text-xs font-medium flex flex-col items-center gap-1">
-              <XCircle className="w-4 h-4" /> Bloqueado
-            </div>
-          </div> */}
         </div>
       </header>
       {/* CTA hacia Herramientas Interactivas */}
